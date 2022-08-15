@@ -8,8 +8,14 @@
 #include <list>
 
 namespace FileMaker {
+
+    inline namespace testFM {
+        void test();
+    }
+
     inline namespace loadFile{
         void loadObject(std::string fileName);
+        void loadSchematic(std::string fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
     }
 

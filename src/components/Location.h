@@ -15,9 +15,9 @@ private:
 
 public:
     Location(int x, int y, int z);
-    int getX();
-    int getY();
-    int getZ();
+    [[nodiscard]] int getX() const;
+    [[nodiscard]] int getY() const;
+    [[nodiscard]] int getZ() const;
     void setX(int x);
     void setY(int y);
     void setZ(int z);

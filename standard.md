@@ -1,0 +1,1 @@
+https://stroustrup.com/JSF-AV-rules.pdf

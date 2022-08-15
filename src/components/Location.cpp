@@ -12,15 +12,15 @@ Location::Location(int x, int y, int z) {
     this->z = z;
 }
 
-int Location::getX() {
+int Location::getX() const {
     return this->x;
 }
 
-int Location::getY() {
+int Location::getY() const {
     return this->y;
 }
 
-int Location::getZ() {
+int Location::getZ() const {
     return this->z;
 }
 

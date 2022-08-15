@@ -18,7 +18,7 @@ void FileMaker::testFM::test() {
 }
 
 void FileMaker::loadFile::loadObject(std::string fileName) {
-    std::list<double>vertices;
+    std::list<double> vertices;
     std::list<double> textures;
     std::list<double> normals;
     std::string material = nullptr;
@@ -87,6 +87,8 @@ void FileMaker::loadFile::loadObject(std::string fileName) {
     }
     else std::cout << "Unable to open file";
 }
+
+void FileMaker::loadFile::loadSchematic(std::string fileName) {}
 
 std::list<std::string> FileMaker::utils::split(std::string &str, char delimiter) {
     std::list<std::string> result;
