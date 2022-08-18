@@ -6,6 +6,8 @@
 #define PROJECT2_FILEMAKER_H
 
 #include <list>
+#include <vector>
+#include "../components/Voxel.h"
 
 namespace FileMaker {
 
@@ -14,13 +16,22 @@ namespace FileMaker {
     }
 
     inline namespace loadFile{
-        void loadObject(std::string fileName);
-        void loadSchematic(std::string fileName);
+        void loadObject(const std::string& fileName);
+        std::vector<Voxel> loadSchematic(const std::string& fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
+        void saveSchematic(const std::string &fileName, const std::vector<Voxel> &voxels);
     }
 
     inline namespace utils {
         std::list<std::string> split(std::string &str, char delimiter);
+
+        unsigned short readUnsignedShort(std::ifstream &input);
+
+        int readRGB(std::ifstream &input);
+
+        void writeUnsignedShort(std::ofstream &output, unsigned short v);
+
+        int writeRGB(std::ofstream &output, int v);
     }
 }
 #endif //PROJECT2_FILEMAKER_H

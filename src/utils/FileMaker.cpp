@@ -5,11 +5,33 @@
 #include <iostream>
 #include "FileMaker.h"
 #include "Face.h"
+#include "../components/Voxel.h"
 #include <fstream>
 #include <string>
 #include <list>
 #include <vector>
 #include <array>
+#include <climits>
+#include <algorithm>
+
+template <typename T>
+T swap_endian(T u)
+{
+    static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
+
+    union
+    {
+        T u;
+        unsigned char u8[sizeof(T)];
+    } source, dest;
+
+    source.u = u;
+
+    for (size_t k = 0; k < sizeof(T); k++)
+        dest.u8[k] = source.u8[sizeof(T) - k - 1];
+
+    return dest.u;
+}
 
 
 void FileMaker::testFM::test() {
@@ -17,12 +39,12 @@ void FileMaker::testFM::test() {
 
 }
 
-void FileMaker::loadFile::loadObject(std::string fileName) {
+void FileMaker::loadFile::loadObject(const std::string& fileName) {
     std::list<double> vertices;
     std::list<double> textures;
     std::list<double> normals;
-    std::string material = nullptr;
-    std::string group = nullptr;
+    std::string* material = nullptr;
+    std::string* group = nullptr;
     std::string line;
     std::fstream file ("../model_files/" + fileName);
     if (file.is_open()) {
@@ -70,14 +92,14 @@ void FileMaker::loadFile::loadObject(std::string fileName) {
                     throw std::runtime_error("Invalid argument in command 'vn': '" + line + "'");
                 }
             } else if (cmd.front() == "g" || cmd.front() == "G") {
-                group = cmd.back();
+                group = &cmd.back();
             } else if (cmd.front() == "usemtl") {
-                material = cmd.back();
+                material = &cmd.back();
             } else if (cmd.front() == "f" || cmd.front() == "F") {
                 if (cmd.size() < 4) throw std::runtime_error("Command 'f' should have at least 3 arguments");
                 Face face = Face((int)(cmd.size() - 1));
-                face.setGroup(group);
-                face.setMaterial(material);
+                face.setGroup(*group);
+                face.setMaterial(*material);
                 for (int i = 0; i < cmd.size(); i++) {
                     std::list<std::string> face_cmd = FileMaker::utils::split(cmd.back(), '/');
                 }
@@ -88,7 +110,59 @@ void FileMaker::loadFile::loadObject(std::string fileName) {
     else std::cout << "Unable to open file";
 }
 
-void FileMaker::loadFile::loadSchematic(std::string fileName) {}
+std::vector<Voxel> FileMaker::loadFile::loadSchematic(const std::string& fileName) {
+    std::vector<Voxel> voxels;
+    std::ifstream input("../schematics/" + fileName, std::ios::in | std::ios::binary);
+    if (input.is_open()) {
+        auto magic = FileMaker::utils::readUnsignedShort(input);
+        if (magic != 0xFAAB) throw std::runtime_error("Invalid schematic magic");
+        auto paletteSize = FileMaker::utils::readUnsignedShort(input);
+        std::vector<int> palette;
+        for (int i = 0; i < paletteSize; i++) {
+            palette.push_back(FileMaker::utils::readRGB(input));
+//            std::cout << std::hex << std::uppercase << palette.back() << std::endl;
+        }
+        while (true) {
+            int color;
+            int x = FileMaker::utils::readUnsignedShort(input);
+            if (input.eof()) break;
+            int y = FileMaker::utils::readUnsignedShort(input);
+            int z = FileMaker::utils::readUnsignedShort(input);
+            if (!palette.empty()) {
+                color = palette[FileMaker::utils::readUnsignedShort(input)];
+            } else {
+                color = FileMaker::utils::readRGB(input);
+            }
+            voxels.emplace_back(x, y, z, color);
+        }
+    }
+    return voxels;
+}
+
+void FileMaker::loadFile::saveSchematic(const std::string& fileName, const std::vector<Voxel>& voxels) {
+    std::ofstream output("../schematics/" + fileName, std::ios::out | std::ios::binary);
+    if (output.is_open()) {
+        //TODO: preprocess voxels
+        std::vector<int> palette;
+        FileMaker::utils::writeUnsignedShort(output, 0xFAAB);
+        FileMaker::utils::writeUnsignedShort(output, (unsigned short)palette.size());
+        for (int i = 0; i < palette.size(); i++) {
+            palette.push_back(FileMaker::utils::writeRGB(output, palette[i]));
+//            std::cout << std::hex << std::uppercase << palette.back() << std::endl;
+        }
+        for (const auto & voxel : voxels) {
+            int color;
+            FileMaker::utils::writeUnsignedShort(output, voxel.getX());
+            FileMaker::utils::writeUnsignedShort(output, voxel.getY());
+            FileMaker::utils::writeUnsignedShort(output, voxel.getZ());
+            if (!palette.empty()) {
+                FileMaker::utils::writeUnsignedShort(output, (unsigned short)(find(palette.begin(), palette.end(), voxel.getColor()) - palette.begin()));
+            } else {
+                FileMaker::utils::writeRGB(output, voxel.getColor());
+            }
+        }
+    }
+}
 
 std::list<std::string> FileMaker::utils::split(std::string &str, char delimiter) {
     std::list<std::string> result;
@@ -105,4 +179,25 @@ std::list<std::string> FileMaker::utils::split(std::string &str, char delimiter)
     return result;
 }
 
+unsigned short FileMaker::utils::readUnsignedShort(std::ifstream &input) {
+    unsigned short v;
+    input.read(reinterpret_cast<char *>(&v), sizeof(v));
+    v = swap_endian(v);
+    return v;
+}
+void FileMaker::utils::writeUnsignedShort(std::ofstream &output, unsigned short v) {
+    v = swap_endian(v);
+    output.write(reinterpret_cast<char *>(&v), sizeof(v));
+}
 
+int FileMaker::utils::readRGB(std::ifstream &input) {
+    int v;
+    input.read(reinterpret_cast<char *>(&v), 3);
+    v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
+    return v;
+}
+
+int FileMaker::utils::writeRGB(std::ofstream &output, int v) {
+    v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
+    output.write(reinterpret_cast<char *>(&v), 3);
+}
