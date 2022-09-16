@@ -5,6 +5,7 @@
 #include <vector>
 #include "Face.h"
 
+// could be changed into a template with variable array size
 Face::Face(int n) {
     size = n;
     vertices = new int[n];

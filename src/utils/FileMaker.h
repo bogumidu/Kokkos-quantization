@@ -19,7 +19,7 @@ namespace FileMaker {
         void loadObject(const std::string& fileName);
         std::vector<Voxel> loadSchematic(const std::string& fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
-        void saveSchematic(const std::string &fileName, const std::vector<Voxel> &voxels);
+        void saveSchematic(const std::string &fileName, std::vector<Voxel> &voxels);
     }
 
     inline namespace utils {
@@ -32,6 +32,8 @@ namespace FileMaker {
         void writeUnsignedShort(std::ofstream &output, unsigned short v);
 
         int writeRGB(std::ofstream &output, int v);
+
+        void preprocessVoxels(std::vector<Voxel> &voxels);
     }
 }
 #endif //PROJECT2_FILEMAKER_H

@@ -13,6 +13,7 @@
 #include <array>
 #include <climits>
 #include <algorithm>
+#include <set>
 
 template <typename T>
 T swap_endian(T u)
@@ -139,10 +140,10 @@ std::vector<Voxel> FileMaker::loadFile::loadSchematic(const std::string& fileNam
     return voxels;
 }
 
-void FileMaker::loadFile::saveSchematic(const std::string& fileName, const std::vector<Voxel>& voxels) {
+void FileMaker::loadFile::saveSchematic(const std::string& fileName, std::vector<Voxel>& voxels) {
     std::ofstream output("../schematics/" + fileName, std::ios::out | std::ios::binary);
     if (output.is_open()) {
-        //TODO: preprocess voxels
+        FileMaker::utils::preprocessVoxels(voxels);
         std::vector<int> palette;
         FileMaker::utils::writeUnsignedShort(output, 0xFAAB);
         FileMaker::utils::writeUnsignedShort(output, (unsigned short)palette.size());
@@ -200,4 +201,39 @@ int FileMaker::utils::readRGB(std::ifstream &input) {
 int FileMaker::utils::writeRGB(std::ofstream &output, int v) {
     v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
     output.write(reinterpret_cast<char *>(&v), 3);
+}
+
+void FileMaker::utils::preprocessVoxels(std::vector<Voxel>& voxels) {
+    std::set<int> colors;
+    int min_x = INT_MAX;
+    int min_y = INT_MAX;
+    int min_z = INT_MAX;
+    int max_x = INT_MIN;
+    int max_y = INT_MIN;
+    int max_z = INT_MIN;
+    // Sets base coordinates and sets base points
+    for (const Voxel& voxel : voxels) {
+        if (voxel.getX() > max_x) max_x = voxel.getX();
+        if (voxel.getY() > max_y) max_y = voxel.getY();
+        if (voxel.getZ() > max_z) max_z = voxel.getZ();
+        if (voxel.getX() < min_x) min_x = voxel.getX();
+        if (voxel.getY() < min_y) min_y = voxel.getY();
+        if (voxel.getZ() < min_z) min_z = voxel.getZ();
+        colors.insert(voxel.getColor());
+    }
+    // Changes current coordinates to start at base point (0, 0, 0)
+    for (Voxel voxel : voxels) {
+        voxel.setX(voxel.getX() - min_x);
+        voxel.setY(voxel.getY() - min_y);
+        voxel.setZ(voxel.getZ() - min_z);
+    }
+    if (colors.size() < 0xFF) {
+        auto paletteSize = colors.size();
+        auto palette = std::vector<int>(paletteSize);
+        for (int color : colors) {
+            palette.push_back(color);
+        }
+    } else {
+        auto paletteSize = 0;
+    }
 }
