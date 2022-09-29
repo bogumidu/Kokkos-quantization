@@ -34,6 +34,8 @@ namespace FileMaker {
         int writeRGB(std::ofstream &output, int v);
 
         void preprocessVoxels(std::vector<Voxel> &voxels);
+
+        int parseInt(const std::string& s);
     }
 }
 #endif //PROJECT2_FILEMAKER_H

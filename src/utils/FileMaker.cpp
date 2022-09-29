@@ -40,13 +40,15 @@ void FileMaker::testFM::test() {
 
 }
 
-void FileMaker::loadFile::loadObject(const std::string& fileName) {
+void FileMaker::loadFile::loadObject(const std::string& fileName, ) {
     std::list<double> vertices;
     std::list<double> textures;
     std::list<double> normals;
     std::string* material = nullptr;
     std::string* group = nullptr;
     std::string line;
+    std::list<Face> faces;
+    //TODO: add face array and array reference to store faces
     std::fstream file ("../model_files/" + fileName);
     if (file.is_open()) {
         while (getline(file, line)) {
@@ -102,7 +104,19 @@ void FileMaker::loadFile::loadObject(const std::string& fileName) {
                 face.setGroup(*group);
                 face.setMaterial(*material);
                 for (int i = 0; i < cmd.size(); i++) {
-                    std::list<std::string> face_cmd = FileMaker::utils::split(cmd.back(), '/');
+                    std::list<std::string> indices = FileMaker::utils::split(cmd.back(), '/');
+                    int texture = -1;
+                    int normal = -1;
+                    int vertex = FileMaker::parseInt(indices.front());
+                    indices.pop_front();
+                    if (!indices.empty()) {
+                        texture = parseInt(indices.front());
+                        indices.pop_front();
+                        if (!indices.empty()) normal = parseInt(indices.front());
+                    }
+                    face.set
+                    //TODO: finish it!!!
+                    //TODO: need forceTriangles function and maybe calculate dimension
                 }
             }
         }
@@ -236,4 +250,9 @@ void FileMaker::utils::preprocessVoxels(std::vector<Voxel>& voxels) {
     } else {
         auto paletteSize = 0;
     }
+}
+
+int FileMaker::utils::parseInt(const std::string& s) {
+    if (s.empty()) return -1;
+    return std::stoi(s);
 }

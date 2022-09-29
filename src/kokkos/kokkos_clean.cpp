@@ -25,6 +25,10 @@ struct hello_world {
     }
 };
 
+struct QuantizationAlgorithm {
+    auto& faces;
+};
+
 // Probably running on single core
 int main_kokkos(int argc, char *argv[]) {
     std::cout << argc << ":\n";
