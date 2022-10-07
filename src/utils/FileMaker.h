@@ -8,6 +8,7 @@
 #include <list>
 #include <vector>
 #include "../components/Voxel.h"
+#include "ObjectStore.h"
 
 namespace FileMaker {
 
@@ -16,7 +17,7 @@ namespace FileMaker {
     }
 
     inline namespace loadFile{
-        void loadObject(const std::string& fileName);
+        void loadObject(const std::string& fileName, ObjectStore* objectStore);
         std::vector<Voxel> loadSchematic(const std::string& fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
         void saveSchematic(const std::string &fileName, std::vector<Voxel> &voxels);
@@ -31,7 +32,7 @@ namespace FileMaker {
 
         void writeUnsignedShort(std::ofstream &output, unsigned short v);
 
-        int writeRGB(std::ofstream &output, int v);
+        void writeRGB(std::ofstream &output, int v);
 
         void preprocessVoxels(std::vector<Voxel> &voxels);
 

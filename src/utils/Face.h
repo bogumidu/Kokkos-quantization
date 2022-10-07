@@ -7,24 +7,25 @@
 
 
 #include <string>
+#include <list>
 
 struct Face {
 
 private:
-    int size;
+    int size{};
 
-    int *vertices;
+    int *vertices{};
 
-    int *textures;
+    int *textures{};
 
-    int *normals;
+    int *normals{};
 
     std::string material;
 
     std::string group;
 
 public:
-    explicit Face(int n);
+    explicit Face(int n = 3);
 
     virtual ~Face();
 
@@ -38,9 +39,13 @@ public:
 
     [[nodiscard]] const std::string &getGroup();
 
-    void setMaterial(std::string material);
+    void setMaterial(const std::string& set_material);
 
-    void setGroup(std::string group);
+    void setGroup(const std::string& set_group);
+
+    void setVertex(int index, int vertex, int texture, int normal);
+
+    std::list<Face> forceTriangles();
 
 };
 

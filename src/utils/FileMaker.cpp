@@ -6,6 +6,7 @@
 #include "FileMaker.h"
 #include "Face.h"
 #include "../components/Voxel.h"
+#include "ObjectStore.h"
 #include <fstream>
 #include <string>
 #include <list>
@@ -36,19 +37,18 @@ T swap_endian(T u)
 
 
 void FileMaker::testFM::test() {
-    FileMaker::loadObject("test.obj");
+//    FileMaker::loadObject("test.obj");
 
 }
 
-void FileMaker::loadFile::loadObject(const std::string& fileName, ) {
-    std::list<double> vertices;
-    std::list<double> textures;
-    std::list<double> normals;
+void FileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* objectStore) {
+    std::list<std::vector<double>> vertices;
+    std::list<std::vector<double>> textures;
+    std::list<std::vector<double>> normals;
     std::string* material = nullptr;
     std::string* group = nullptr;
     std::string line;
     std::list<Face> faces;
-    //TODO: add face array and array reference to store faces
     std::fstream file ("../model_files/" + fileName);
     if (file.is_open()) {
         while (getline(file, line)) {
@@ -57,40 +57,37 @@ void FileMaker::loadFile::loadObject(const std::string& fileName, ) {
             if (cmd.front() == "v" || cmd.front() == "V") {
                 if (cmd.size() != 4) throw std::runtime_error("Command 'v' should have 3 arguments");
                 try {
-                    double a = std::stod(cmd.back());
+                    double z = std::stod(cmd.back());
                     cmd.pop_back();
-                    double b = std::stod(cmd.back());
+                    double y = std::stod(cmd.back());
                     cmd.pop_back();
-                    double c = std::stod(cmd.back());
-                    vertices.push_back(a);
-                    vertices.push_back(b);
-                    vertices.push_back(c);
+                    double x = std::stod(cmd.back());
+                    std::vector<double> vertices_temp = {x, y, z};
+                    vertices.push_back(vertices_temp);
                 } catch (std::invalid_argument &e) {
                     throw std::runtime_error("Invalid argument in command 'v': '" + line + "'");
                 }
             } else if (cmd.front() == "vt" || cmd.front() == "Vt" || cmd.front() == "vT" || cmd.front() == "VT") {
                 if (cmd.size() < 3) throw std::runtime_error("Command 'vt' should have at least 2 arguments");
                 try {
-                    double a = std::stod(cmd.back());
+                    double y = std::stod(cmd.back());
                     cmd.pop_back();
-                    double b = std::stod(cmd.back());
-                    cmd.pop_back();
-                    textures.push_back(a);
-                    textures.push_back(b);
+                    double x = std::stod(cmd.back());
+                    std::vector<double> textures_temp = {x, y};
+                    textures.push_back(textures_temp);
                 } catch (std::invalid_argument &e) {
                     throw std::runtime_error("Invalid argument in command 'vt': '" + line + "'");
                 }
             } else if (cmd.front() == "vn" || cmd.front() == "Vn" || cmd.front() == "vN" || cmd.front() == "VN") {
                 if (cmd.size() != 4) throw std::runtime_error("Command 'vn' should have 3 arguments");
                 try {
-                    double a = std::stod(cmd.back());
+                    double z = std::stod(cmd.back());
                     cmd.pop_back();
-                    double b = std::stod(cmd.back());
+                    double y = std::stod(cmd.back());
                     cmd.pop_back();
-                    double c = std::stod(cmd.back());
-                    normals.push_back(a);
-                    normals.push_back(b);
-                    normals.push_back(c);
+                    double x = std::stod(cmd.back());
+                    std::vector<double> normals_temp = {x, y, z};
+                    normals.push_back(normals_temp);
                 } catch (std::invalid_argument &e) {
                     throw std::runtime_error("Invalid argument in command 'vn': '" + line + "'");
                 }
@@ -114,13 +111,44 @@ void FileMaker::loadFile::loadObject(const std::string& fileName, ) {
                         indices.pop_front();
                         if (!indices.empty()) normal = parseInt(indices.front());
                     }
-                    face.set
-                    //TODO: finish it!!!
-                    //TODO: need forceTriangles function and maybe calculate dimension
+                    face.setVertex(i - 1, vertex, texture, normal);
                 }
+                std::list<Face> temp_faces = face.forceTriangles();
+                faces.insert(faces.end(), temp_faces.begin(), temp_faces.end());
             }
         }
+        Face faces_final[faces.size()];
+        std::vector<double> vertices_final[vertices.size()];
+        std::vector<double> textures_final[textures.size()];
+        std::vector<double> normals_final[normals.size()];
+        for (int i = 0; i < faces.size(); i++) {
+            faces_final[i] = faces.front();
+            faces.pop_front();
+        }
+        for (int i = 0; i < vertices.size(); i++) {
+            std::cout << vertices.front().front() << "\n";
+            vertices_final[i] = vertices.front();
+            vertices.pop_front();
+        }
+        for (int i = 0; i < textures.size(); i++) {
+            textures_final[i] = textures.front();
+            textures.pop_front();
+        }
+        for (int i = 0; i < normals.size(); i++) {
+            normals_final[i] = normals.front();
+            normals.pop_front();
+        }
+        objectStore->setFaces(faces_final);
+        objectStore->setSizeFaces((int) faces.size());
+        objectStore->setVertices(vertices_final);
+        objectStore->setSizeVertices((int) vertices.size());
+        objectStore->setTextures(textures_final);
+        objectStore->setSizeTextures((int) textures.size());
+        objectStore->setNormals(normals_final);
+        objectStore->setSizeNormals((int) normals.size());
+        objectStore->calculateDimensions();
         file.close();
+        std::cout << faces.size() << " " << vertices.size() << "\n" << objectStore->getSizeVertices() << "\n";
     }
     else std::cout << "Unable to open file";
 }
@@ -161,12 +189,12 @@ void FileMaker::loadFile::saveSchematic(const std::string& fileName, std::vector
         std::vector<int> palette;
         FileMaker::utils::writeUnsignedShort(output, 0xFAAB);
         FileMaker::utils::writeUnsignedShort(output, (unsigned short)palette.size());
-        for (int i = 0; i < palette.size(); i++) {
-            palette.push_back(FileMaker::utils::writeRGB(output, palette[i]));
-//            std::cout << std::hex << std::uppercase << palette.back() << std::endl;
+        if (!palette.empty()) {
+            for (int paletteValue : palette) {
+                FileMaker::utils::writeRGB(output, paletteValue);
+            }
         }
         for (const auto & voxel : voxels) {
-            int color;
             FileMaker::utils::writeUnsignedShort(output, voxel.getX());
             FileMaker::utils::writeUnsignedShort(output, voxel.getY());
             FileMaker::utils::writeUnsignedShort(output, voxel.getZ());
@@ -176,6 +204,7 @@ void FileMaker::loadFile::saveSchematic(const std::string& fileName, std::vector
                 FileMaker::utils::writeRGB(output, voxel.getColor());
             }
         }
+        output.close();
     }
 }
 
@@ -212,7 +241,7 @@ int FileMaker::utils::readRGB(std::ifstream &input) {
     return v;
 }
 
-int FileMaker::utils::writeRGB(std::ofstream &output, int v) {
+void FileMaker::utils::writeRGB(std::ofstream &output, int v) {
     v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
     output.write(reinterpret_cast<char *>(&v), 3);
 }
