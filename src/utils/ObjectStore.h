@@ -7,7 +7,7 @@
 
 
 #include <vector>
-#include "Face.h"
+#include "../components/Face.h"
 
 struct ObjectStore {
 private:

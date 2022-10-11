@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "FileMaker.h"
-#include "Face.h"
+#include "../components/Face.h"
 #include "../components/Voxel.h"
 #include "ObjectStore.h"
 #include <fstream>
