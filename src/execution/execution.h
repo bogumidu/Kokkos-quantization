@@ -4,7 +4,7 @@
 
 #ifndef PROJECT2_EXECUTION_H
 #define PROJECT2_EXECUTION_H
-namespace Voxelization {
+namespace voxelization {
     int main(int argc, char *argv[]);
 }
 #endif //PROJECT2_EXECUTION_H

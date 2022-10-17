@@ -7,7 +7,7 @@
 #include "Kokkos_Core.hpp"
 #include "execution.h"
 #include "../utils/ObjectStore.h"
-#include "../utils/FileMaker.h"
+#include "../utils/fileMaker.h"
 
 struct hello_world {
 
@@ -27,11 +27,11 @@ struct hello_world {
     }
 };
 
-int Voxelization::main(int argc, char *argv[]) {
+int voxelization::main(int argc, char *argv[]) {
 
 
     auto* objectStore = new ObjectStore();
-    FileMaker::loadObject("hand_02.obj", objectStore);
+    fileMaker::loadObject("hand_02.obj", objectStore);
     auto faces = objectStore->getFaces();
     auto vertices = objectStore->getVertices();
     auto size_vertices = objectStore->getSizeVertices();
@@ -48,11 +48,11 @@ int Voxelization::main(int argc, char *argv[]) {
 //            all_args[i] = argv[i];
 //        }
 //    }
-//    auto voxels = FileMaker::loadFile::loadSchematic("test1.schematic");
+//    auto voxels = fileMaker::loadFile::loadSchematic("test1.schematic");
 //    for (const auto& voxel : voxels) {
 //        std::cout << voxel.getX() << " " << voxel.getY() << " " << voxel.getZ() << " " << voxel.getColor() << std::endl;
 //    }
-//    FileMaker::loadFile::saveSchematic("test2.schematic", voxels);
+//    fileMaker::loadFile::saveSchematic("test2.schematic", voxels);
 //    char** kokkosArgs = new char*[argc + 1];
 //    for (int i = 0; i < argc; i++) {
 //        kokkosArgs[i] = argv[i];

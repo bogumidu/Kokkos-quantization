@@ -47,7 +47,7 @@ public:
 
     void resetPosition();
 
-    bool hasVoxel(Voxel v);
+    bool hasVoxel(Voxel* v);
 
 };
 

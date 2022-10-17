@@ -96,10 +96,10 @@ void VoxelStore::resetPosition() {
     this->position = 0;
 }
 
-bool VoxelStore::hasVoxel(Voxel v) {
+bool VoxelStore::hasVoxel(Voxel* v) {
     for (int i = position - 16; i >= 0; i-= 16) {
         try {
-            if (v.getX() == readIntAt(i) && v.getY() == readIntAt(i + 4) && v.getZ() == readIntAt(i + 8)) {
+            if (v->getX() == readIntAt(i) && v->getY() == readIntAt(i + 4) && v->getZ() == readIntAt(i + 8)) {
                 return true;
             }
         } catch (std::invalid_argument& ex) {

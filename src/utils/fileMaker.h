@@ -10,7 +10,7 @@
 #include "../components/Voxel.h"
 #include "ObjectStore.h"
 
-namespace FileMaker {
+namespace fileMaker {
 
     inline namespace testFM {
         void test();

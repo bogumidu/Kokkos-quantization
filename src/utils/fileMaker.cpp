@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "FileMaker.h"
+#include "fileMaker.h"
 #include "../components/Face.h"
 #include "../components/Voxel.h"
 #include "ObjectStore.h"
@@ -36,12 +36,12 @@ T swap_endian(T u)
 }
 
 
-void FileMaker::testFM::test() {
-//    FileMaker::loadObject("test.obj");
+void fileMaker::testFM::test() {
+//    fileMaker::loadObject("test.obj");
 
 }
 
-void FileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* objectStore) {
+void fileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* objectStore) {
     std::list<std::vector<double>> vertices;
     std::list<std::vector<double>> textures;
     std::list<std::vector<double>> normals;
@@ -53,7 +53,7 @@ void FileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* o
     if (file.is_open()) {
         while (getline(file, line)) {
             if (line.empty() || line[0] == '#') continue;
-            std::list<std::string> cmd = FileMaker::utils::split(line, ' ');
+            std::list<std::string> cmd = fileMaker::utils::split(line, ' ');
             if (cmd.front() == "v" || cmd.front() == "V") {
                 if (cmd.size() != 4) throw std::runtime_error("Command 'v' should have 3 arguments");
                 try {
@@ -101,10 +101,10 @@ void FileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* o
                 face.setGroup(*group);
                 face.setMaterial(*material);
                 for (int i = 0; i < cmd.size(); i++) {
-                    std::list<std::string> indices = FileMaker::utils::split(cmd.back(), '/');
+                    std::list<std::string> indices = fileMaker::utils::split(cmd.back(), '/');
                     int texture = -1;
                     int normal = -1;
-                    int vertex = FileMaker::parseInt(indices.front());
+                    int vertex = fileMaker::parseInt(indices.front());
                     indices.pop_front();
                     if (!indices.empty()) {
                         texture = parseInt(indices.front());
@@ -153,28 +153,28 @@ void FileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* o
     else std::cout << "Unable to open file";
 }
 
-std::vector<Voxel> FileMaker::loadFile::loadSchematic(const std::string& fileName) {
+std::vector<Voxel> fileMaker::loadFile::loadSchematic(const std::string& fileName) {
     std::vector<Voxel> voxels;
     std::ifstream input("../schematics/" + fileName, std::ios::in | std::ios::binary);
     if (input.is_open()) {
-        auto magic = FileMaker::utils::readUnsignedShort(input);
+        auto magic = fileMaker::utils::readUnsignedShort(input);
         if (magic != 0xFAAB) throw std::runtime_error("Invalid schematic magic");
-        auto paletteSize = FileMaker::utils::readUnsignedShort(input);
+        auto paletteSize = fileMaker::utils::readUnsignedShort(input);
         std::vector<int> palette;
         for (int i = 0; i < paletteSize; i++) {
-            palette.push_back(FileMaker::utils::readRGB(input));
+            palette.push_back(fileMaker::utils::readRGB(input));
 //            std::cout << std::hex << std::uppercase << palette.back() << std::endl;
         }
         while (true) {
             int color;
-            int x = FileMaker::utils::readUnsignedShort(input);
+            int x = fileMaker::utils::readUnsignedShort(input);
             if (input.eof()) break;
-            int y = FileMaker::utils::readUnsignedShort(input);
-            int z = FileMaker::utils::readUnsignedShort(input);
+            int y = fileMaker::utils::readUnsignedShort(input);
+            int z = fileMaker::utils::readUnsignedShort(input);
             if (!palette.empty()) {
-                color = palette[FileMaker::utils::readUnsignedShort(input)];
+                color = palette[fileMaker::utils::readUnsignedShort(input)];
             } else {
-                color = FileMaker::utils::readRGB(input);
+                color = fileMaker::utils::readRGB(input);
             }
             voxels.emplace_back(x, y, z, color);
         }
@@ -182,33 +182,33 @@ std::vector<Voxel> FileMaker::loadFile::loadSchematic(const std::string& fileNam
     return voxels;
 }
 
-void FileMaker::loadFile::saveSchematic(const std::string& fileName, std::vector<Voxel>& voxels) {
+void fileMaker::loadFile::saveSchematic(const std::string& fileName, std::vector<Voxel>& voxels) {
     std::ofstream output("../schematics/" + fileName, std::ios::out | std::ios::binary);
     if (output.is_open()) {
-        FileMaker::utils::preprocessVoxels(voxels);
+        fileMaker::utils::preprocessVoxels(voxels);
         std::vector<int> palette;
-        FileMaker::utils::writeUnsignedShort(output, 0xFAAB);
-        FileMaker::utils::writeUnsignedShort(output, (unsigned short)palette.size());
+        fileMaker::utils::writeUnsignedShort(output, 0xFAAB);
+        fileMaker::utils::writeUnsignedShort(output, (unsigned short)palette.size());
         if (!palette.empty()) {
             for (int paletteValue : palette) {
-                FileMaker::utils::writeRGB(output, paletteValue);
+                fileMaker::utils::writeRGB(output, paletteValue);
             }
         }
         for (const auto & voxel : voxels) {
-            FileMaker::utils::writeUnsignedShort(output, voxel.getX());
-            FileMaker::utils::writeUnsignedShort(output, voxel.getY());
-            FileMaker::utils::writeUnsignedShort(output, voxel.getZ());
+            fileMaker::utils::writeUnsignedShort(output, voxel.getX());
+            fileMaker::utils::writeUnsignedShort(output, voxel.getY());
+            fileMaker::utils::writeUnsignedShort(output, voxel.getZ());
             if (!palette.empty()) {
-                FileMaker::utils::writeUnsignedShort(output, (unsigned short)(find(palette.begin(), palette.end(), voxel.getColor()) - palette.begin()));
+                fileMaker::utils::writeUnsignedShort(output, (unsigned short)(find(palette.begin(), palette.end(), voxel.getColor()) - palette.begin()));
             } else {
-                FileMaker::utils::writeRGB(output, voxel.getColor());
+                fileMaker::utils::writeRGB(output, voxel.getColor());
             }
         }
         output.close();
     }
 }
 
-std::list<std::string> FileMaker::utils::split(std::string &str, char delimiter) {
+std::list<std::string> fileMaker::utils::split(std::string &str, char delimiter) {
     std::list<std::string> result;
     int start = 0;
     for (int j = 0; j < str.length(); j++) {
@@ -223,30 +223,30 @@ std::list<std::string> FileMaker::utils::split(std::string &str, char delimiter)
     return result;
 }
 
-unsigned short FileMaker::utils::readUnsignedShort(std::ifstream &input) {
+unsigned short fileMaker::utils::readUnsignedShort(std::ifstream &input) {
     unsigned short v;
     input.read(reinterpret_cast<char *>(&v), sizeof(v));
     v = swap_endian(v);
     return v;
 }
-void FileMaker::utils::writeUnsignedShort(std::ofstream &output, unsigned short v) {
+void fileMaker::utils::writeUnsignedShort(std::ofstream &output, unsigned short v) {
     v = swap_endian(v);
     output.write(reinterpret_cast<char *>(&v), sizeof(v));
 }
 
-int FileMaker::utils::readRGB(std::ifstream &input) {
+int fileMaker::utils::readRGB(std::ifstream &input) {
     int v;
     input.read(reinterpret_cast<char *>(&v), 3);
     v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
     return v;
 }
 
-void FileMaker::utils::writeRGB(std::ofstream &output, int v) {
+void fileMaker::utils::writeRGB(std::ofstream &output, int v) {
     v = (v & 0xFF) << 16 | (v & 0xFF00) | (v & 0xFF0000) >> 16;
     output.write(reinterpret_cast<char *>(&v), 3);
 }
 
-void FileMaker::utils::preprocessVoxels(std::vector<Voxel>& voxels) {
+void fileMaker::utils::preprocessVoxels(std::vector<Voxel>& voxels) {
     std::set<int> colors;
     int min_x = INT_MAX;
     int min_y = INT_MAX;
@@ -281,7 +281,7 @@ void FileMaker::utils::preprocessVoxels(std::vector<Voxel>& voxels) {
     }
 }
 
-int FileMaker::utils::parseInt(const std::string& s) {
+int fileMaker::utils::parseInt(const std::string& s) {
     if (s.empty()) return -1;
     return std::stoi(s);
 }
