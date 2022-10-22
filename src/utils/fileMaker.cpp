@@ -126,7 +126,7 @@ void fileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* o
             faces.pop_front();
         }
         for (int i = 0; i < vertices.size(); i++) {
-            std::cout << vertices.front().front() << "\n";
+//            std::cout << vertices.front().front() << "\n";
             vertices_final[i] = vertices.front();
             vertices.pop_front();
         }
@@ -148,7 +148,7 @@ void fileMaker::loadFile::loadObject(const std::string& fileName, ObjectStore* o
         objectStore->setSizeNormals((int) normals.size());
         objectStore->calculateDimensions();
         file.close();
-        std::cout << faces.size() << " " << vertices.size() << "\n" << objectStore->getSizeVertices() << "\n";
+//        std::cout << faces.size() << " " << vertices.size() << "\n" << objectStore->getSizeVertices() << "\n";
     }
     else std::cout << "Unable to open file";
 }

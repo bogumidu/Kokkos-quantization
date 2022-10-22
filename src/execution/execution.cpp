@@ -32,22 +32,6 @@ int voxelization::main(int argc, char *argv[]) {
 
     auto* objectStore = new ObjectStore();
     fileMaker::loadObject("hand_02.obj", objectStore);
-    auto faces = objectStore->getFaces();
-    auto vertices = objectStore->getVertices();
-    auto size_vertices = objectStore->getSizeVertices();
-    std::cout << faces << " <- is a location of faces, \n" << vertices << ": " << size_vertices << std::endl;
-//    std::cout << argc << ":\n";
-//    std::string all_args[argc];
-//    bool debug;
-//
-//    if (argc < 2) throw std::runtime_error("Missing object file name");
-//
-//
-//    if (argc > 2) {
-//        for (int i = 2; i <= argc - 1; i++) {
-//            all_args[i] = argv[i];
-//        }
-//    }
 //    auto voxels = fileMaker::loadFile::loadSchematic("test1.schematic");
 //    for (const auto& voxel : voxels) {
 //        std::cout << voxel.getX() << " " << voxel.getY() << " " << voxel.getZ() << " " << voxel.getColor() << std::endl;
