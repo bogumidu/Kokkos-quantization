@@ -1,12 +1,18 @@
 #include <cstdio>
 #include <iostream>
 #include <cstring>
+#include <cmath>
 #include "execution/execution.h"
+#include "algorithm/voxelization.h"
 
 bool debug = false;
 bool kokkos = false;
 
 int main(int argc, char *argv[]) {
+
+    // for storing add list wit push back
+    // make it as a VerticesStore with method putVertex so no duplicates
+
 //    int a = 5;
 //    auto *ptr = &a;
 //    std::cout << ptr << "\n";

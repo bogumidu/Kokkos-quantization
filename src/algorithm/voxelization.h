@@ -11,8 +11,9 @@
 
 namespace voxelization {
     inline namespace teselation {
+        void teselate(TempFace* face, int accuracy, ObjectStore* objectStore, std::list<std::vector<double>>* vertices);
         Voxel* quantizationAlgorithm(TempFace* face, int accuracy, Voxel* voxel, VoxelStore* voxelStore);
-        int getTeselationLevels(Face* face);
+        int getTeselationLevels(Face *face, ObjectStore *objectStore);
     }
     inline namespace voxelization {
         Voxel* createVoxel(TempFace* face, Voxel* voxel, VoxelStore* voxelStore);
@@ -21,6 +22,7 @@ namespace voxelization {
     inline namespace utils {
         // TODO: change name
         bool almostEqual(std::vector<double> v1, std::vector<double> v2);
+        double distance(std::vector<double> v1, std::vector<double> v2);
     }
 }
 
