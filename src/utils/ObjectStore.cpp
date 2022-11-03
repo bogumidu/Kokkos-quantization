@@ -100,4 +100,9 @@ void ObjectStore::setSizeNormals(int sizeNormals) {
     size_normals = sizeNormals;
 }
 
-ObjectStore::~ObjectStore() = default;
+ObjectStore::~ObjectStore() {
+    delete[] vertices;
+    delete[] textures;
+    delete[] normals;
+    delete[] faces;
+}

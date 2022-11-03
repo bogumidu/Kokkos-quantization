@@ -12,16 +12,21 @@
 struct Face {
 
 private:
-    int size{};
+    int size;
 
-    int *vertices{};
+    // x, y, z vector
+    std::vector<double> *vertices{};
 
-    int *textures{};
+    // u, v vector
+    std::vector<double> *textures{};
 
-    int *normals{};
+    // x, y, z vector
+    std::vector<double> *normals{};
 
+    // material name
     std::string material;
 
+    // group name
     std::string group;
 
 public:
@@ -29,11 +34,11 @@ public:
 
     virtual ~Face();
 
-    [[nodiscard]] int *getVertices();
+    [[nodiscard]] std::vector<double> *getVertices();
 
-    [[nodiscard]] int *getTextures();
+    [[nodiscard]] std::vector<double> *getTextures();
 
-    [[nodiscard]] int *getNormals();
+    [[nodiscard]] std::vector<double> *getNormals();
 
     [[nodiscard]] const std::string &getMaterial();
 
@@ -43,7 +48,14 @@ public:
 
     void setGroup(const std::string& set_group);
 
-    void setVertex(int index, int vertex, int texture, int normal);
+    void setVertex(int index, std::vector<double> vertex, std::vector<double> texture, std::vector<double> normal);
+
+    void setVertices(std::vector<double> *vertices);
+
+    void setTextures(std::vector<double> *textures);
+
+    void setNormals(std::vector<double> *normals);
+
 
     std::list<Face> forceTriangles();
 

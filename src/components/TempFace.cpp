@@ -6,20 +6,6 @@
 
 TempFace* TempFace::fromFace(Face face, ObjectStore* objectStore) {
     auto* f = new TempFace();
-    auto* vertices = objectStore->getVertices();
-    auto* textures = objectStore->getTextures();
-    TempFace::v1 = vertices[face.getVertices()[0] - 1];
-    if (face.getTextures()[0] != -1) {
-        TempFace::t1 = textures[face.getTextures()[0] -1];
-    }
-    TempFace::v2 = vertices[face.getVertices()[1] - 1];
-    if (face.getTextures()[1] != -1) {
-        TempFace::t2 = textures[face.getTextures()[1] -1];
-    }
-    TempFace::v3 = vertices[face.getVertices()[2] - 1];
-    if (face.getTextures()[2] != -1) {
-        TempFace::t3 = textures[face.getTextures()[2] -1];
-    }
     return f;
 }
 

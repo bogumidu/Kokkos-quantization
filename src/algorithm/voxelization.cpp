@@ -103,12 +103,12 @@ voxelization::teselation::quantizationAlgorithm(TempFace *face, int accuracy, Vo
 }
 
 int voxelization::teselation::getTeselationLevels(Face *face, ObjectStore *objectStore) {
-    std::vector<double> v1 = objectStore->getVertices()[face->getVertices()[0] - 1];
-    std::vector<double> v2 = objectStore->getVertices()[face->getVertices()[1] - 1];
-    std::vector<double> v3 = objectStore->getVertices()[face->getVertices()[2] - 1];
-    int result = (int) round(std::log2(std::max(std::max(utils::distance(v1, v2), utils::distance(v1, v3)),
-                                                utils::distance(v2, v3))));
-    return result;
+//    std::vector<double> v1 = objectStore->getVertices()[face->getVertices()[0] - 1];
+//    std::vector<double> v2 = objectStore->getVertices()[face->getVertices()[1] - 1];
+//    std::vector<double> v3 = objectStore->getVertices()[face->getVertices()[2] - 1];
+//    int result = (int) round(std::log2(std::max(std::max(utils::distance(v1, v2), utils::distance(v1, v3)),
+//                                                utils::distance(v2, v3))));
+    return 0;
 }
 
 

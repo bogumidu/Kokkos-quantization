@@ -9,23 +9,23 @@
 #include "../utils/ObjectStore.h"
 #include "../utils/fileMaker.h"
 
-struct hello_world {
-
-    int n;
-
-    KOKKOS_INLINE_FUNCTION
-    explicit
-    hello_world(int num) noexcept
-            : n(num)
-    { }
-
-    // this is a macro that allows method to run on CUDA devices when using CUDA
-    KOKKOS_INLINE_FUNCTION
-    void operator()(const int i) const {
-        printf("N is %d, Hello from i = %i\n", n, i);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-};
+//struct hello_world {
+//
+//    int n;
+//
+//    KOKKOS_INLINE_FUNCTION
+//    explicit
+//    hello_world(int num) noexcept
+//            : n(num)
+//    { }
+//
+//    // this is a macro that allows method to run on CUDA devices when using CUDA
+//    KOKKOS_INLINE_FUNCTION
+//    void operator()(const int i) const {
+//        printf("N is %d, Hello from i = %i\n", n, i);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//    }
+//};
 
 int voxelization::main(int argc, char *argv[]) {
 

@@ -2,6 +2,7 @@
 // Created by bogum on 15.04.2022.
 //
 
+#include <utility>
 #include <vector>
 #include <list>
 #include <stdexcept>
@@ -10,27 +11,27 @@
 // could be changed into a template with variable array size
 Face::Face(int n) {
     size = n;
-    vertices = new int[n];
-    textures = new int[n];
-    normals = new int[n];
+    vertices = new std::vector<double>[n];
+    textures = new std::vector<double>[n];
+    normals = new std::vector<double>[n];
     for (int i = 0; i < n; i++) {
-        vertices[i] = -1;
-        textures[i] = -1;
-        normals[i] = -1;
+        vertices[i] = {-1, -1, -1};
+        textures[i] = {-1, -1};
+        normals[i] = {-1, -1, -1};
     }
 }
 
 Face::~Face() = default;
 
-int * Face::getVertices() {
+std::vector<double> * Face::getVertices() {
     return vertices;
 }
 
-int * Face::getTextures() {
+std::vector<double> * Face::getTextures() {
     return textures;
 }
 
-int * Face::getNormals() {
+std::vector<double> * Face::getNormals() {
     return normals;
 }
 
@@ -50,11 +51,12 @@ void Face::setGroup(const std::string& set_group) {
     Face::group = set_group;
 }
 
-void Face::setVertex(int index, int vertex, int texture, int normal) {
+void Face::setVertex(int index, std::vector<double> vertex, std::vector<double> texture, std::vector<double> normal) {
     if (index >= size) throw std::runtime_error("Index out of range in face");
-    vertices[index] = vertex;
-    textures[index] = texture;
-    normals[index] = normal;
+    // TODO: check if std::move does what i think it does
+    vertices[index] = std::move(vertex);
+    textures[index] = std::move(texture);
+    normals[index] = std::move(normal);
 }
 
 std::list<Face> Face::forceTriangles() {
@@ -72,4 +74,16 @@ std::list<Face> Face::forceTriangles() {
         result.push_back(f);
     }
     return result;
+}
+
+void Face::setVertices(std::vector<double> *vertices) {
+    Face::vertices = vertices;
+}
+
+void Face::setTextures(std::vector<double> *textures) {
+    Face::textures = textures;
+}
+
+void Face::setNormals(std::vector<double> *normals) {
+    Face::normals = normals;
 }

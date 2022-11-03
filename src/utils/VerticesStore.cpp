@@ -11,6 +11,5 @@ void VerticesStore::putVertex(const std::vector<double>& v) {
 std::vector<double> *VerticesStore::listUnique() {
     auto vertices_ = VerticesStore::vertices;
     vertices_.unique();
-    std::vector<double>
     return nullptr;
 }
