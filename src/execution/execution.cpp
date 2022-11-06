@@ -8,6 +8,7 @@
 #include "execution.h"
 #include "../utils/ObjectStore.h"
 #include "../utils/fileMaker.h"
+#include "../algorithm/algorithm.h"
 
 //struct hello_world {
 //
@@ -27,11 +28,16 @@
 //    }
 //};
 
-int voxelization::main(int argc, char *argv[]) {
+int algorithm::main(int argc, char *argv[]) {
 
 
     auto* objectStore = new ObjectStore();
+//    auto* voxelStore = new VoxelStore();
     fileMaker::loadObject("hand_02.obj", objectStore);
+    auto faces = objectStore->getFaces();
+    for (int i = 0; i <= 50; i++) {
+        algorithm::quantizationAlgorithm(faces, algorithm::getTessellationLevels(faces[i]), i, voxelStore)
+    }
 //    auto voxels = fileMaker::loadFile::loadSchematic("test1.schematic");
 //    for (const auto& voxel : voxels) {
 //        std::cout << voxel.getX() << " " << voxel.getY() << " " << voxel.getZ() << " " << voxel.getColor() << std::endl;

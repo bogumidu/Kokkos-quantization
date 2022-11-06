@@ -25,7 +25,7 @@ public:
 
     void setSize(int size);
 
-    void putVoxel(Voxel v);
+    void putVoxel(Voxel* v);
 
     Voxel readVoxel();
 

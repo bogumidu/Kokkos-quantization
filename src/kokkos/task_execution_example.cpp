@@ -33,7 +33,7 @@
 //            KOKKOS_INLINE_FUNCTION
 //            void operator()(TeamMember& member, int& result) {
 //                auto& scheduler = member.scheduler();
-//                // Operation instructions (this is where voxelization will happen)
+//                // Operation instructions (this is where algorithm will happen)
 //            }
 //
 //};

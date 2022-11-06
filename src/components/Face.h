@@ -56,7 +56,6 @@ public:
 
     void setNormals(std::vector<double> *normals);
 
-
     std::list<Face> forceTriangles();
 
 };

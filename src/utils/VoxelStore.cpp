@@ -21,11 +21,12 @@ void VoxelStore::setSize(int size) {
     VoxelStore::size = size;
 }
 
-void VoxelStore::putVoxel(Voxel v) {
+void VoxelStore::putVoxel(Voxel* v) {
+    if (hasVoxel(v)) return;
     try {
-        putInt(v.getX());
-        putInt(v.getY());
-        putInt(v.getZ());
+        putInt(v->getX());
+        putInt(v->getY());
+        putInt(v->getZ());
         blockCount++;
     } catch (std::invalid_argument& ex) {
         std::cout << "End of file reached: \n" << ex.what() << "\n";

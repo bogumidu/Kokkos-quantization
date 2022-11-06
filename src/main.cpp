@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cmath>
 #include "execution/execution.h"
-#include "algorithm/voxelization.h"
+#include "algorithm/algorithm.h"
 
 bool debug = false;
 bool kokkos = false;
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
     // TODO: need to change compiler
 
-    voxelization::main(argc, argv);
+    algorithm::main(argc, argv);
 
 // Po włączeniu CUDA, kokkos wymaga NVCC.
 // W instrukcji podane jest, że trzeba zmienić CMAKE_CXX_COMPILER na nvcc_wrapper z kokkosa.

@@ -15,7 +15,7 @@ set(Kokkos_ENABLE_DEBUG 1)
 #set(Kokkos_ENABLE_CUDA 1)
 #set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/lib/kokkos/bin/nvcc_wrapper")
 
-add_executable(project2 src/main.cpp src/components/Location.cpp src/components/Location.h src/utils/fileMaker.cpp src/utils/fileMaker.h src/components/Face.cpp src/components/Face.h src/components/Voxel.cpp src/components/Voxel.h src/components/TempFace.cpp src/components/TempFace.h src/utils/VoxelStore.cpp src/utils/VoxelStore.h src/kokkos/task_execution_example.cpp src/kokkos/task_execution_example.h src/utils/ObjectStore.cpp src/utils/ObjectStore.h src/execution/execution.cpp src/execution/execution.h src/algorithm/voxelization.cpp src/algorithm/voxelization.h src/utils/VerticesStore.cpp src/utils/VerticesStore.h)
+add_executable(project2 src/main.cpp src/utils/fileMaker.cpp src/utils/fileMaker.h src/components/Face.cpp src/components/Face.h src/components/Voxel.cpp src/components/Voxel.h src/utils/VoxelStore.cpp src/utils/VoxelStore.h src/kokkos/task_execution_example.cpp src/kokkos/task_execution_example.h src/utils/ObjectStore.cpp src/utils/ObjectStore.h src/execution/execution.cpp src/execution/execution.h src/algorithm/algorithm.cpp src/algorithm/algorithm.h src/utils/VerticesStore.cpp src/utils/VerticesStore.h)
 
 # kokkos library
 add_subdirectory(CMAKE_CURRENT_SOURCE_DIR/../lib/kokkos)

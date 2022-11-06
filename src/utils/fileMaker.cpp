@@ -41,7 +41,7 @@ void fileMaker::testFM::test() {
 }
 
 void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *objectStore) {
-    // stored as vector to gain access to random alocated
+    // stored as vector to gain access to random allocated
     // vectors are probably too large to store
     std::deque<std::vector<double>> vertices;
     std::deque<std::vector<double>> textures;
@@ -119,7 +119,6 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
                     }
                 }
                 std::list<Face> faces_triangles = temp_face.forceTriangles();
-                // TODO: not sure if it is best method
                 for (; !faces_triangles.empty(); faces_triangles.pop_front()) {
                     faces.push_back(faces_triangles.front());
                 }

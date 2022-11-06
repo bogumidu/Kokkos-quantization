@@ -68,6 +68,8 @@ public:
 
     [[nodiscard]] Face *getFaces() const;
 
+    void putFace(Face* face);
+
     void setVertices(std::vector<double> *set_vertices);
 
     void setTextures(std::vector<double> *set_textures);

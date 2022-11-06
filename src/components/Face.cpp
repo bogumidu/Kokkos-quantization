@@ -53,7 +53,6 @@ void Face::setGroup(const std::string& set_group) {
 
 void Face::setVertex(int index, std::vector<double> vertex, std::vector<double> texture, std::vector<double> normal) {
     if (index >= size) throw std::runtime_error("Index out of range in face");
-    // TODO: check if std::move does what i think it does
     vertices[index] = std::move(vertex);
     textures[index] = std::move(texture);
     normals[index] = std::move(normal);
