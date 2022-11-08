@@ -8,6 +8,7 @@
 
 #include <string>
 #include <list>
+#include <ostream>
 
 struct Face {
 
@@ -57,6 +58,8 @@ public:
     void setNormals(std::vector<double> *normals);
 
     std::list<Face> forceTriangles();
+
+    friend std::ostream &operator<<(std::ostream &os, const Face &face);
 
 };
 

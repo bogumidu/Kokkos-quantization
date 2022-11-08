@@ -6,48 +6,38 @@
 #define PROJECT2_VOXELSTORE_H
 
 
+#include <deque>
 #include "../components/Voxel.h"
 
 struct VoxelStore {
 
 private:
     int size;
-    unsigned char *bytes;
-    int position = 0;
-    int blockCount = 0;
+    std::deque<Voxel> voxels_deque;
+    Voxel *voxels{};
 
 public:
-    explicit VoxelStore(int size);
+    explicit VoxelStore();
 
     virtual ~VoxelStore();
 
     [[nodiscard]] int getSize() const;
 
-    void setSize(int size);
+    void setSize(int set_size);
 
-    void putVoxel(Voxel* v);
+    [[nodiscard]] const std::deque<Voxel> &getVoxelsDeque() const;
 
-    Voxel readVoxel();
+    void setVoxelsDeque(const std::deque<Voxel> &voxelsDeque);
 
-    void putInt(int v);
+    [[nodiscard]] Voxel *getVoxels() const;
 
-    int readInt();
+    void setVoxels(Voxel *set_voxels);
 
-    int readIntAt(int pos);
+    void putVoxel(const Voxel& put_v);
 
-    void write(int i);
+    bool hasVoxel(const Voxel& temp_v);
 
-    int read();
-
-    int readAt(int pos);
-
-    bool hasNext();
-
-    bool canPut();
-
-    void resetPosition();
-
-    bool hasVoxel(Voxel* v);
+    Voxel* convertToArray();
 
 };
 

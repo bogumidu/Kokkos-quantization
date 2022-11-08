@@ -8,6 +8,7 @@
 #include "../components/Voxel.h"
 #include "../utils/VoxelStore.h"
 #include "../components/Face.h"
+#include <vector>
 
 namespace algorithm {
     // main algorithm functor

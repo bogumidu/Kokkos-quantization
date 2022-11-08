@@ -22,3 +22,14 @@ std::string Voxel::toString() {
                     += std::string(", color=") += std::to_string(getColor()) += std::string("}");
 }
 
+bool Voxel::operator==(const Voxel &rhs) const {
+    return static_cast<const Location &>(*this) == static_cast<const Location &>(rhs) &&
+           color == rhs.color;
+}
+
+bool Voxel::operator!=(const Voxel &rhs) const {
+    return !(rhs == *this);
+}
+
+Voxel::Voxel() = default;
+

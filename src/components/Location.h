@@ -15,6 +15,9 @@ private:
 
 public:
     Location(int x, int y, int z);
+
+    Location();
+
     [[nodiscard]] int getX() const;
     [[nodiscard]] int getY() const;
     [[nodiscard]] int getZ() const;
@@ -22,7 +25,11 @@ public:
     void setY(int set_y);
     void setZ(int set_z);
     void setLocation(int set_x, int set_y, int set_z);
-    int getLocalId() const;
+    [[nodiscard]] int getLocalId() const;
+
+    bool operator==(const Location &rhs) const;
+
+    bool operator!=(const Location &rhs) const;
 
 };
 

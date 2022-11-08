@@ -86,3 +86,9 @@ void Face::setTextures(std::vector<double> *textures) {
 void Face::setNormals(std::vector<double> *normals) {
     Face::normals = normals;
 }
+
+std::ostream &operator<<(std::ostream &os, const Face &face) {
+    os << "size: " << face.size << " vertices: " << face.vertices << " textures: " << face.textures << " normals: "
+       << face.normals << " material: " << face.material << " group: " << face.group;
+    return os;
+}

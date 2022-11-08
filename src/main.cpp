@@ -1,9 +1,6 @@
-#include <cstdio>
 #include <iostream>
 #include <cstring>
-#include <cmath>
 #include "execution/execution.h"
-#include "algorithm/algorithm.h"
 
 bool debug = false;
 bool kokkos = false;

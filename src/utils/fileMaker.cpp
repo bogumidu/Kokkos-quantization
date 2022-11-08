@@ -46,8 +46,8 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
     std::deque<std::vector<double>> vertices;
     std::deque<std::vector<double>> textures;
     std::deque<std::vector<double>> normals;
-    std::string *material = nullptr;
-    std::string *group = nullptr;
+    std::string material = "null";
+    std::string group = "null";
     std::string line;
     std::deque<Face> faces;
     std::fstream file("../model_files/" + fileName);
@@ -95,14 +95,18 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
                     throw std::runtime_error("Invalid argument in command 'vn': '" + line + "'");
                 }
             } else if (cmd.front() == "g" || cmd.front() == "G") {
-                group = &cmd.back();
+                if (cmd.size() == 1) continue;
+                auto* temp_group = &cmd.back();
+                group = *temp_group;
             } else if (cmd.front() == "usemtl") {
-                material = &cmd.back();
+                if (cmd.size() == 1) continue;
+                auto* temp_material = &cmd.back();
+                material = *temp_material;
             } else if (cmd.front() == "f" || cmd.front() == "F") {
                 if (cmd.size() < 4) throw std::runtime_error("Command 'f' should have at least 3 arguments");
                 Face temp_face = Face((int) (cmd.size() - 1));
-                temp_face.setGroup(*group);
-                temp_face.setMaterial(*material);
+                temp_face.setGroup(group);
+                temp_face.setMaterial(material);
                 std::vector<double> temp_vertices[cmd.size()];
                 std::vector<double> temp_textures[cmd.size()];
                 std::vector<double> temp_normals[cmd.size()];
@@ -124,10 +128,11 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
                 }
             }
         }
-        Face faces_final[faces.size()];
-        std::vector<double> vertices_final[vertices.size()];
-        std::vector<double> textures_final[textures.size()];
-        std::vector<double> normals_final[normals.size()];
+        // pointer to dynamically allocated array
+        Face* faces_final = new Face[faces.size()];
+        auto* vertices_final = new std::vector<double>[vertices.size()];
+        auto* textures_final = new std::vector<double>[textures.size()];
+        auto* normals_final = new std::vector<double>[normals.size()];
         for (int i = 0; i < faces.size(); i++) {
             faces_final[i] = faces.at(i);
         }
@@ -150,7 +155,6 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
         objectStore->setSizeNormals((int) normals.size());
         objectStore->calculateDimensions();
         file.close();
-//        std::cout << faces.size() << " " << vertices.size() << "\n" << objectStore->getSizeVertices() << "\n";
     } else std::cout << "Unable to open file";
 }
 
@@ -183,10 +187,12 @@ std::vector<Voxel> fileMaker::loadFile::loadSchematic(const std::string &fileNam
     return voxels;
 }
 
-void fileMaker::loadFile::saveSchematic(const std::string &fileName, std::vector<Voxel> &voxels) {
-    std::ofstream output("../schematics/" + fileName, std::ios::out | std::ios::binary);
+void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore *voxelStore) {
+    std::ofstream output("../schematics/" + fileName + ".schematic", std::ios::out | std::ios::binary);
     if (output.is_open()) {
-        fileMaker::utils::preprocessVoxels(voxels);
+        auto* voxels = voxelStore->getVoxels();
+        auto voxel_size = voxelStore->getSize();
+        fileMaker::utils::preprocessVoxels(voxels, voxel_size);
         std::vector<int> palette;
         fileMaker::utils::writeUnsignedShort(output, 0xFAAB);
         fileMaker::utils::writeUnsignedShort(output, (unsigned short) palette.size());
@@ -195,15 +201,15 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, std::vector
                 fileMaker::utils::writeRGB(output, paletteValue);
             }
         }
-        for (const auto &voxel: voxels) {
-            fileMaker::utils::writeUnsignedShort(output, voxel.getX());
-            fileMaker::utils::writeUnsignedShort(output, voxel.getY());
-            fileMaker::utils::writeUnsignedShort(output, voxel.getZ());
+        for (int i = 0; i < voxel_size; i++) {
+            fileMaker::utils::writeUnsignedShort(output, voxels[i].getX());
+            fileMaker::utils::writeUnsignedShort(output, voxels[i].getY());
+            fileMaker::utils::writeUnsignedShort(output, voxels[i].getZ());
             if (!palette.empty()) {
                 fileMaker::utils::writeUnsignedShort(output, (unsigned short) (
-                        find(palette.begin(), palette.end(), voxel.getColor()) - palette.begin()));
+                        find(palette.begin(), palette.end(), voxels[i].getColor()) - palette.begin()));
             } else {
-                fileMaker::utils::writeRGB(output, voxel.getColor());
+                fileMaker::utils::writeRGB(output, voxels[i].getColor());
             }
         }
         output.close();
@@ -249,7 +255,7 @@ void fileMaker::utils::writeRGB(std::ofstream &output, int v) {
     output.write(reinterpret_cast<char *>(&v), 3);
 }
 
-void fileMaker::utils::preprocessVoxels(std::vector<Voxel> &voxels) {
+void fileMaker::utils::preprocessVoxels(Voxel *voxels, int voxels_size) {
     std::set<int> colors;
     int min_x = INT_MAX;
     int min_y = INT_MAX;
@@ -258,20 +264,20 @@ void fileMaker::utils::preprocessVoxels(std::vector<Voxel> &voxels) {
     int max_y = INT_MIN;
     int max_z = INT_MIN;
     // Sets base coordinates and sets base points
-    for (const Voxel &voxel: voxels) {
-        if (voxel.getX() > max_x) max_x = voxel.getX();
-        if (voxel.getY() > max_y) max_y = voxel.getY();
-        if (voxel.getZ() > max_z) max_z = voxel.getZ();
-        if (voxel.getX() < min_x) min_x = voxel.getX();
-        if (voxel.getY() < min_y) min_y = voxel.getY();
-        if (voxel.getZ() < min_z) min_z = voxel.getZ();
-        colors.insert(voxel.getColor());
+    for (int i = 0; i < voxels_size; i++) {
+        if (voxels[i].getX() > max_x) max_x = voxels[i].getX();
+        if (voxels[i].getY() > max_y) max_y = voxels[i].getY();
+        if (voxels[i].getZ() > max_z) max_z = voxels[i].getZ();
+        if (voxels[i].getX() < min_x) min_x = voxels[i].getX();
+        if (voxels[i].getY() < min_y) min_y = voxels[i].getY();
+        if (voxels[i].getZ() < min_z) min_z = voxels[i].getZ();
+        colors.insert(voxels[i].getColor());
     }
     // Changes current coordinates to start at base point (0, 0, 0)
-    for (Voxel voxel: voxels) {
-        voxel.setX(voxel.getX() - min_x);
-        voxel.setY(voxel.getY() - min_y);
-        voxel.setZ(voxel.getZ() - min_z);
+    for (int i = 0; i < voxels_size; i++) {
+        voxels[i].setX(voxels[i].getX() - min_x);
+        voxels[i].setY(voxels[i].getY() - min_y);
+        voxels[i].setZ(voxels[i].getZ() - min_z);
     }
     if (colors.size() < 0xFF) {
         auto paletteSize = colors.size();

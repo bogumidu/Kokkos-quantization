@@ -18,9 +18,9 @@ void algorithm::quantizationAlgorithm(Face *faces, int accuracy, int index, Voxe
     if (accuracy <= 0 || (utils::almostEqual(vertices[0], vertices[1]) && utils::almostEqual(vertices[1], vertices[2]))) {
         int color = 0xffffff;
         // TODO: skipped material colorAt() function
-        auto* voxel1 = new Voxel((int) vertices[0].front(), (int) vertices[0].at(1), (int) vertices[0].back(), color);
-        auto* voxel2 = new Voxel((int) vertices[1].front(), (int) vertices[1].at(1), (int) vertices[1].back(), color);
-        auto* voxel3 = new Voxel((int) vertices[2].front(), (int) vertices[2].at(1), (int) vertices[2].back(), color);
+        Voxel voxel1((int) vertices[0].front(), (int) vertices[0].at(1), (int) vertices[0].back(), color);
+        Voxel voxel2((int) vertices[1].front(), (int) vertices[1].at(1), (int) vertices[1].back(), color);
+        Voxel voxel3((int) vertices[2].front(), (int) vertices[2].at(1), (int) vertices[2].back(), color);
         voxelStore->putVoxel(voxel1);
         voxelStore->putVoxel(voxel2);
         voxelStore->putVoxel(voxel3);

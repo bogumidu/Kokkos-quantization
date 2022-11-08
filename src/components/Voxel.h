@@ -15,6 +15,8 @@ private:
     int color;
 
 public:
+    Voxel();
+
     Voxel(int x, int y, int z, int color);
 
     virtual ~Voxel();
@@ -24,6 +26,10 @@ public:
     void setColor(int set_color);
 
     std::string toString();
+
+    bool operator==(const Voxel &rhs) const;
+
+    bool operator!=(const Voxel &rhs) const;
 
 };
 

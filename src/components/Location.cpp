@@ -45,3 +45,15 @@ void Location::setLocation(int set_x, int set_y, int set_z) {
     this->y = set_y;
     this->z = set_z;
 }
+
+bool Location::operator==(const Location &rhs) const {
+    return x == rhs.x &&
+           y == rhs.y &&
+           z == rhs.z;
+}
+
+bool Location::operator!=(const Location &rhs) const {
+    return !(rhs == *this);
+}
+
+Location::Location() = default;
