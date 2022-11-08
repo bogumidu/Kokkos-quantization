@@ -19,9 +19,9 @@ public:
 
     virtual ~Voxel();
 
-    int getColor() const;
+    [[nodiscard]] int getColor() const;
 
-    void setColor(int color);
+    void setColor(int set_color);
 
     std::string toString();
 

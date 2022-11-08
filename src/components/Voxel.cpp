@@ -8,15 +8,13 @@ int Voxel::getColor() const {
     return color;
 }
 
-void Voxel::setColor(int color) {
-    Voxel::color = color;
+void Voxel::setColor(int set_color) {
+    Voxel::color = set_color;
 }
 
 Voxel::Voxel(int x, int y, int z, int color) : Location(x, y, z), color(color) {}
 
-Voxel::~Voxel() {
-
-}
+Voxel::~Voxel() = default;
 
 std::string Voxel::toString() {
     return std::string("Voxel{x=") += std::to_string(getX()) += std::string(", y=")
