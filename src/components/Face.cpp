@@ -58,15 +58,25 @@ void Face::setVertex(int index, std::vector<double> vertex, std::vector<double> 
     normals[index] = std::move(normal);
 }
 
+void Face::setLine(int l) {
+    line = l;
+}
+
 std::list<Face> Face::forceTriangles() {
     if (size == 3) {
         std::list<Face> result;
-        result.push_back(*this);
+        Face f = Face(3);
+        f.setLine(line);
+        f.setVertex(0, vertices[0], textures[0], normals[0]);
+        f.setVertex(1, vertices[1], textures[1], normals[1]);
+        f.setVertex(2, vertices[2], textures[2], normals[2]);
+        result.push_back(f);
         return result;
     }
     std::list<Face> result;
     for (int i = 0; i < size - 2; i++) {
         Face f = Face(3);
+        f.setLine(line);
         f.setVertex(0, vertices[0], textures[0], normals[0]);
         f.setVertex(1, vertices[1 + i], textures[1 + i], normals[1 + i]);
         f.setVertex(2, vertices[2 + i], textures[2 + i], normals[2 + i]);
@@ -88,7 +98,11 @@ void Face::setNormals(std::vector<double> *normals) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Face &face) {
-    os << "size: " << face.size << " vertices: " << face.vertices << " textures: " << face.textures << " normals: "
-       << face.normals << " material: " << face.material << " group: " << face.group;
+    os << "line: " << face.line << ", size: " << face.size << " vertices: {["
+    << face.vertices[0].front() << ", " << face.vertices[0].at(1) << ", " << face.vertices[0].back() << "], ["
+    << face.vertices[1].front() << ", " << face.vertices[1].at(1) << ", " << face.vertices[1].back() << "], ["
+    << face.vertices[2].front() << ", " << face.vertices[2].at(1) << ", " << face.vertices[2].back() << "]} "
+    << " textures: " << face.textures << " normals: " << face.normals
+    << " material: " << face.material << " group: " << face.group;
     return os;
 }

@@ -6,6 +6,7 @@
 #include <valarray>
 #include <cmath>
 #include <vector>
+#include <iostream>
 #include "algorithm.h"
 #include "../components/Face.h"
 
@@ -78,12 +79,21 @@ void algorithm::quantizationAlgorithm(Face *faces, int accuracy, int index, Voxe
 }
 
 int algorithm::tessellation::getTessellationLevels(Face face) {
+//    std::cout << face << std::endl;
     auto vertices = face.getVertices();
     std::vector<double> v1 = vertices[0];
     std::vector<double> v2 = vertices[1];
     std::vector<double> v3 = vertices[2];
-    return (int) round(std::log2(std::max(std::max(utils::distance(v1, v2), utils::distance(v1, v3)),
+    int result = (int) round(std::log2(std::max(std::max(utils::distance(v1, v2), utils::distance(v1, v3)),
                                                 utils::distance(v2, v3))));
+//    std::cout << v2.front() << "   " << v2.at(1) << "    " << v2.back() << "\n";
+//    std::cout << v1.front() << "\n";
+//    std::cout << v1.at(1) << "\n";
+//    std::cout << v1.back() << "\n";
+//    std::cout << result << "\n";
+//    std::cout << result << "\n";
+//    std::cout << result << "\n";
+    return result;
 }
 
 
@@ -97,7 +107,6 @@ bool algorithm::utils::almostEqual(std::vector<double> v1, std::vector<double> v
 
 
 double algorithm::utils::distance(std::vector<double> v1, std::vector<double> v2) {
-    double result = sqrt(pow(v1.front() - v2.front(), 2) + pow(v1.at(1) - v2.at(1), 2)
-                         + pow(v1.back() - v2.back(), 2));
-    return result;
+    return sqrt(pow(v1.front() - v2.front(), 2) + pow(v1.at(1) - v2.at(1), 2)
+                + pow(v1.back() - v2.back(), 2));
 }

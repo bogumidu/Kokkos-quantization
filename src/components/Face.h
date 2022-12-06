@@ -14,6 +14,7 @@ struct Face {
 
 private:
     int size;
+    int line;
 
     // x, y, z vector
     std::vector<double> *vertices{};
@@ -56,6 +57,8 @@ public:
     void setTextures(std::vector<double> *textures);
 
     void setNormals(std::vector<double> *normals);
+
+    void setLine(int line);
 
     std::list<Face> forceTriangles();
 
