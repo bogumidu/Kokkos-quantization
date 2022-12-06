@@ -200,19 +200,13 @@ std::vector<Voxel> fileMaker::loadFile::loadSchematic(const std::string &fileNam
 void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore *voxelStore) {
     std::ofstream output("../schematics/" + fileName + ".schematic", std::ios::out | std::ios::binary);
     if (output.is_open()) {
-        std::cout << 1 << "\n";
         auto* voxels = voxelStore->getVoxels();
-        std::cout << 2 << "\n";
         auto voxel_size = voxelStore->getSize();
-        std::cout << 3 << "\n";
         fileMaker::utils::preprocessVoxels(voxels, voxel_size);
-        std::cout << 4 << "\n";
         std::vector<int> palette;
         fileMaker::utils::writeUnsignedShort(output, 0xFAAB);
-        std::cout << 5 << "\n";
         // TODO: Make proper palette
 //        fileMaker::utils::writeUnsignedShort(output, (unsigned short) palette.size());
-//        std::cout << 6 << "\n";
 //        if (!palette.empty()) {
 //            for (int paletteValue: palette) {
 //                fileMaker::utils::writeRGB(output, paletteValue);
@@ -220,7 +214,6 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore 
 //        }
         fileMaker::utils::writeUnsignedShort(output, (unsigned short) 1);
         fileMaker::utils::writeRGB(output, 0xffffff);
-        std::cout << 7 << "\n";
         for (int i = 0; i < voxel_size; i++) {
             fileMaker::utils::writeUnsignedShort(output, voxels[i].getX());
             fileMaker::utils::writeUnsignedShort(output, voxels[i].getY());
@@ -278,7 +271,6 @@ void fileMaker::utils::writeRGB(std::ofstream &output, int v) {
 }
 
 void fileMaker::utils::preprocessVoxels(Voxel *voxels, int voxels_size) {
-    std::cout << 31 << "\n";
     std::set<int> colors;
     int min_x = INT_MAX;
     int min_y = INT_MAX;
@@ -286,10 +278,8 @@ void fileMaker::utils::preprocessVoxels(Voxel *voxels, int voxels_size) {
     int max_x = INT_MIN;
     int max_y = INT_MIN;
     int max_z = INT_MIN;
-    std::cout << voxels_size << "\n";
     // Sets base coordinates and sets base points
     for (int i = 0; i < voxels_size; i++) {
-        if (i > 1500000) std::cout << i << "\n";
         if (voxels[i].getX() > max_x) max_x = voxels[i].getX();
         if (voxels[i].getY() > max_y) max_y = voxels[i].getY();
         if (voxels[i].getZ() > max_z) max_z = voxels[i].getZ();
@@ -299,14 +289,12 @@ void fileMaker::utils::preprocessVoxels(Voxel *voxels, int voxels_size) {
         // TODO: Remove after implementing palette
 //        colors.insert(voxels[i].getColor());
     }
-    std::cout << 33 << "\n";
     // Changes current coordinates to start at base point (0, 0, 0)
     for (int i = 0; i < voxels_size; i++) {
         voxels[i].setX(voxels[i].getX() - min_x);
         voxels[i].setY(voxels[i].getY() - min_y);
         voxels[i].setZ(voxels[i].getZ() - min_z);
     }
-    std::cout << 34 << "\n";
     // TODO: Remove after implementing palette
 //    if (colors.size() < 0xFF) {
 //        auto paletteSize = colors.size();

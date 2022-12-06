@@ -53,7 +53,6 @@ int algorithm::main(int argc, char *argv[]) {
     auto* voxelStore = new VoxelStore();
     fileMaker::loadObject("hand_02.obj", objectStore);
     auto faces = objectStore->getFaces();
-    std::cout << objectStore->getSizeFaces() << "\n";
     // TODO: putVoxel method causes problems with duplicate checking
     for (int i = 0; i < objectStore->getSizeFaces() - 1; i++) {
 //        std::cout << faces[i] << "\n";

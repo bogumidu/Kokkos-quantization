@@ -70,8 +70,8 @@ Voxel *VoxelStore::convertToArray() {
         } else {
             continue;
         }
+        voxels_array[temp_size] = voxels_deque.at(i);
         temp_size++;
-        voxels_array[i] = voxels_deque.at(i);
     }
     std::cout << "Size: " << temp_size << std::endl;
     this->setVoxels(voxels_array);
