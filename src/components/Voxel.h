@@ -5,13 +5,14 @@
 #ifndef PROJECT2_VOXEL_H
 #define PROJECT2_VOXEL_H
 
-
-#include "Location.h"
 #include <string>
 
-struct Voxel : public Location {
+struct Voxel {
 
 private:
+    int x;
+    int y;
+    int z;
     int color;
 
 public:
@@ -19,7 +20,14 @@ public:
 
     Voxel(int x, int y, int z, int color);
 
-    virtual ~Voxel();
+     ~Voxel();
+
+    [[nodiscard]] int getX() const;
+    [[nodiscard]] int getY() const;
+    [[nodiscard]] int getZ() const;
+    void setX(int set_x);
+    void setY(int set_y);
+    void setZ(int set_z);
 
     [[nodiscard]] int getColor() const;
 
