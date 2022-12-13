@@ -13,14 +13,12 @@
 
 bool kokkos_arg = false;
 bool kokkos_team = false;
-bool kokkos_test = false;
+bool kokkos_test = true;
 
 // global view array size factor
-size_t N0;
-
-void viewResize(Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView) {
-    Kokkos::resize(Kokkos::WithoutInitializing, voxelView, N0);
-}
+int N0;
+int safety = INT_MIN;
+int stride_voxel;
 
 struct quantization {
 
@@ -57,20 +55,16 @@ struct quantizationTest {
     void operator()(const int i) const {
         std::list<Voxel> voxelList;
         algorithm::quantizationAlgorithmKokkos(faces, algorithm::getTessellationLevels(faces[i]), i, &voxelList);
-        for (int j = i; !voxelList.empty(); j++) {
-            // check if j is in view size
-            if (j > N0) {
-                throw std::runtime_error("voxel index is out of View size");
-            }
-            // this should check if voxel is written into view -1 is default value which should not be in Voxel coordinates
-            if (voxelView(j, 0) != -1 && voxelView(j, 1) != -1 && voxelView(j, 2) != -1) {
-                continue;
-            }
+        // check if j is in view size
+        if (voxelList.size() > stride_voxel) {
+            throw std::runtime_error("voxel index is out of View size " + std::to_string(voxelList.size()));
+        }
+        for (int j = 0; !voxelList.empty(); j++) {
             Voxel voxel = voxelList.front();
             voxelList.pop_front();
-            voxelView(j, 0) = voxel.getX();
-            voxelView(j, 1) = voxel.getY();
-            voxelView(j, 2) = voxel.getZ();
+            voxelView(i * stride_voxel + j, 0) = voxel.getX();
+            voxelView(i * stride_voxel + j, 1) = voxel.getY();
+            voxelView(i * stride_voxel + j, 2) = voxel.getZ();
         }
     }
 };
@@ -85,9 +79,9 @@ struct initView {
 
     KOKKOS_INLINE_FUNCTION
     void operator()(const int i) const {
-        voxelView(i, 0) = -1;
-        voxelView(i, 1) = -1;
-        voxelView(i, 2) = -1;
+        voxelView(i, 0) = safety;
+        voxelView(i, 1) = safety;
+        voxelView(i, 2) = safety;
     }
 };
 
@@ -158,9 +152,18 @@ int algorithm::main(int argc, char *argv[]) {
         std::cout << objectStore->getSizeFaces() << "\n";
         auto faces = objectStore->getFaces();
         // TODO: needs to fix mocked version to dynamically set size according to faces size
-        N0 = (size_t) objectStore->getSizeFaces() * 1000;
-        Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView ("VoxelStoreDuplicates", N0);
+        int tes_max = 0;
+        std::for_each(faces, faces + objectStore->getSizeFaces(), [&tes_max](Face &face) {
+            int tes = getTessellationLevels(face);
+            if (tes > tes_max) {
+                tes_max = tes;
+            }
+        });
 
+        stride_voxel = (int) pow(4, tes_max) * 3;
+        N0 = (int) (objectStore->getSizeFaces() * stride_voxel);
+        Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView ("VoxelStoreDuplicates", N0);
+        std::cout << "stride_voxel: " << stride_voxel << "\n";
         // initializes view with -1 in values
         Kokkos::parallel_for(N0, initView(voxelView));
 
@@ -171,7 +174,7 @@ int algorithm::main(int argc, char *argv[]) {
         // write voxels from View to VoxelStore
         std::deque<Voxel> voxels;
         for (int i = 0; i < N0; i++) {
-            if (voxelView(i, 0) != -1 && voxelView(i, 1) != -1 && voxelView(i, 2) != -1) {
+            if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
                 voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
             }
         }
