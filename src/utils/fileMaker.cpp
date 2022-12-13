@@ -40,7 +40,7 @@ void fileMaker::testFM::test() {
 
 }
 
-void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *objectStore) {
+void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *objectStore, int ratio) {
     // stored as vector to gain access to random allocated
     // vectors are probably too large to store
     std::deque<std::vector<double>> vertices;
@@ -60,11 +60,11 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
             if (cmd.front() == "v" || cmd.front() == "V") {
                 if (cmd.size() != 4) throw std::runtime_error("Command 'v' should have 3 arguments at line");
                 try {
-                    double z = std::stod(cmd.back());
+                    double z = std::stod(cmd.back()) * ratio;
                     cmd.pop_back();
-                    double y = std::stod(cmd.back());
+                    double y = std::stod(cmd.back()) * ratio;
                     cmd.pop_back();
-                    double x = std::stod(cmd.back());
+                    double x = std::stod(cmd.back()) * ratio;
 //                    std::cout << x << ", " << y << ", " << z << "\n";
                     std::vector<double> vertices_temp = {x, y, z};
                     vertices.push_back(vertices_temp);

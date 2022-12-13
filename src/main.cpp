@@ -15,16 +15,16 @@ int main(int argc, char *argv[]) {
 //    std::cout << ptr << "\n";
 
     // run configuration
-    for (int i = 0; i < argc; ++i) {
-        if ((strcmp(argv[i], "debug") != 0 || strcmp(argv[i], "-d") != 0 || strcmp(argv[i], "test") != 0 || strcmp(argv[i], "-t") != 0) && !debug) {
-            debug = true;
-            std::cout << "DEBUG MODE" << "\n";
-        }
-        if ((strcmp(argv[i], "kokkos") != 0 || strcmp(argv[i], "-k") != 0) && !kokkos) {
-            debug = true;
-        }
-        std::cout << argv[i] << "\n";
-    }
+//    for (int i = 0; i < argc; ++i) {
+//        if ((strcmp(argv[i], "debug") != 0 || strcmp(argv[i], "-d") != 0 || strcmp(argv[i], "test") != 0 || strcmp(argv[i], "-t") != 0) && !debug) {
+//            debug = true;
+//            std::cout << "DEBUG MODE" << "\n";
+//        }
+//        if ((strcmp(argv[i], "kokkos") != 0 || strcmp(argv[i], "-k") != 0) && !kokkos) {
+//            debug = true;
+//        }
+//        std::cout << argv[i] << "\n";
+//    }
 
     // TODO: need to change compiler
 

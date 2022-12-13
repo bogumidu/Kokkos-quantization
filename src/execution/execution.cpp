@@ -13,7 +13,7 @@
 
 bool kokkos_arg = false;
 bool kokkos_team = false;
-bool kokkos_test = true;
+bool kokkos_test = false;
 
 // global view array size factor
 int N0;
@@ -43,28 +43,31 @@ struct quantization {
 };
 
 struct quantizationTest {
+
     Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int* start_point;
     Face* faces;
 
     KOKKOS_INLINE_FUNCTION
     explicit
-    quantizationTest(Face *faces, Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
-            : faces(faces), voxelView(voxelView_) {}
+    quantizationTest(Face *faces_, int *start_point_, Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
+            : faces(faces_), start_point(start_point_), voxelView(voxelView_) {}
 
     KOKKOS_INLINE_FUNCTION
     void operator()(const int i) const {
+        int start = start_point[i];
         std::list<Voxel> voxelList;
         algorithm::quantizationAlgorithmKokkos(faces, algorithm::getTessellationLevels(faces[i]), i, &voxelList);
         // check if j is in view size
-        if (voxelList.size() > stride_voxel) {
+        if (voxelList.size() > N0) {
             throw std::runtime_error("voxel index is out of View size " + std::to_string(voxelList.size()));
         }
         for (int j = 0; !voxelList.empty(); j++) {
             Voxel voxel = voxelList.front();
             voxelList.pop_front();
-            voxelView(i * stride_voxel + j, 0) = voxel.getX();
-            voxelView(i * stride_voxel + j, 1) = voxel.getY();
-            voxelView(i * stride_voxel + j, 2) = voxel.getZ();
+            voxelView(start + j, 0) = voxel.getX();
+            voxelView(start + j, 1) = voxel.getY();
+            voxelView(start + j, 2) = voxel.getZ();
         }
     }
 };
@@ -90,19 +93,36 @@ struct QuantizationTeam {
 };
 
 int algorithm::main(int argc, char *argv[]) {
+    int scale = 3;
+    kokkos_test = false;
 
     if (!kokkos_arg && !kokkos_team && !kokkos_test) {
+//        auto start = std::chrono::high_resolution_clock::now();
+        Kokkos::Timer timer;
+        double start = timer.seconds();
         auto *objectStore = new ObjectStore();
         auto *voxelStore = new VoxelStore();
-        fileMaker::loadObject("hand_02.obj", objectStore);
+        fileMaker::loadObject("mickey_mouse.obj", objectStore, scale);
         auto faces = objectStore->getFaces();
+        double obj = timer.seconds();
+        std::cout << "Object loaded in " << obj - start << " seconds" << std::endl;
         // TODO: putVoxel method causes problems with duplicate checking
         for (int i = 0; i < objectStore->getSizeFaces() - 1; i++) {
 //        std::cout << faces[i] << "\n";
             algorithm::quantizationAlgorithm(faces, algorithm::getTessellationLevels(faces[i]), i, voxelStore);
         }
+        double quant = timer.seconds();
+        std::cout << "Quantization done in " << quant - obj << " seconds" << std::endl;
         voxelStore->convertToArray();
-        fileMaker::saveSchematic("hand_02", voxelStore);
+        double convert = timer.seconds();
+        std::cout << "Conversion done in " << convert - quant << " seconds" << std::endl;
+        fileMaker::saveSchematic("mickey_mouse", voxelStore);
+        double stop = timer.seconds();
+        std::cout << "Schematic saved in " << stop - convert << " seconds" << std::endl;
+        std::cout << "Total time: " << stop - start << "\n";
+//        auto stop = std::chrono::high_resolution_clock::now();
+//        auto duration = stop - start;
+//        std::cout << duration.count() << std::endl;
     }
 
 //    auto voxels = fileMaker::loadFile::loadSchematic("test1.schematic");
@@ -120,7 +140,7 @@ int algorithm::main(int argc, char *argv[]) {
         int kokkosArgc = argc + 1;
         Kokkos::initialize(kokkosArgc, kokkosArgs);
 
-        Kokkos::View<Voxel*, Kokkos::LayoutRight, Kokkos::HostSpace> execution_space("execution_space", 4);
+        Kokkos::View<Voxel*, Kokkos::LayoutRight, Kokkos::HostSpace> execution_space("execution_space", N0);
         auto *objectStore = new ObjectStore();
         auto *voxelStore = new VoxelStore();
         fileMaker::loadObject("hand_02.obj", objectStore);
@@ -146,30 +166,54 @@ int algorithm::main(int argc, char *argv[]) {
         int kokkosArgc = argc + 1;
         Kokkos::initialize(kokkosArgc, kokkosArgs);
 
+        // timer
+        Kokkos::Timer timer;
+        double start = timer.seconds();
+
         // Load model from .obj file
         auto *objectStore = new ObjectStore();
-        fileMaker::loadObject("hand_02.obj", objectStore);
-        std::cout << objectStore->getSizeFaces() << "\n";
+        fileMaker::loadObject("mickey_mouse.obj", objectStore, scale);
+//        std::cout << objectStore->getSizeFaces() << "\n";
         auto faces = objectStore->getFaces();
+        auto faces_size = objectStore->getSizeFaces();
+        int start_point[faces_size];
+        double after_obj = timer.seconds();
+        std::cout << "Object load time: " << after_obj - start << "\n";
         // TODO: needs to fix mocked version to dynamically set size according to faces size
-        int tes_max = 0;
-        std::for_each(faces, faces + objectStore->getSizeFaces(), [&tes_max](Face &face) {
-            int tes = getTessellationLevels(face);
-            if (tes > tes_max) {
-                tes_max = tes;
-            }
-        });
+        double vox_total = 0;
+        int temp_vox = 0;
+        for (int i = 0; i < faces_size - 1; i++) {
+            int tes = algorithm::getTessellationLevels(faces[i]);
+            int voxel_change = pow(4, tes) * 3;
+            vox_total += voxel_change;
+            start_point[i] = temp_vox;
+            temp_vox += voxel_change;
+        }
+//        std::for_each(faces, faces + objectStore->getSizeFaces(), [&tes_max](Face &face) {
+//            int tes = getTessellationLevels(face);
+//            if (tes > tes_max) {
+//                tes_max = tes;
+//            }
+//        });
 
-        stride_voxel = (int) pow(4, tes_max) * 3;
-        N0 = (int) (objectStore->getSizeFaces() * stride_voxel);
+        double after_tes = timer.seconds();
+        std::cout << "Time of finding max teselation: " << after_tes - after_obj << "\n";
+//        stride_voxel = (int) pow(4, vox_total) * 3;
+//        N0 = (int) (objectStore->getSizeFaces() * stride_voxel);
+        N0 = (int) vox_total;
+        std::cout << "Total voxels: " << N0 << "\n";
         Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView ("VoxelStoreDuplicates", N0);
-        std::cout << "stride_voxel: " << stride_voxel << "\n";
-        // initializes view with -1 in values
-        Kokkos::parallel_for(N0, initView(voxelView));
 
+        double after_view = timer.seconds();
+        std::cout << "Time of View allocation: " << after_view - after_tes << "\n";
+        Kokkos::parallel_for(N0, initView(voxelView));
+        double after_init = timer.seconds();
+        std::cout << "Time of View initiation: " << after_init - after_view << "\n";
         // quantization
-        Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantizationTest(faces, voxelView));
+        Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantizationTest(faces, start_point, voxelView));
         Kokkos::fence();
+        double after_quant = timer.seconds();
+        std::cout << "Time of quantization: " << after_quant - after_init << "\n";
 
         // write voxels from View to VoxelStore
         std::deque<Voxel> voxels;
@@ -181,7 +225,15 @@ int algorithm::main(int argc, char *argv[]) {
         auto* voxelStore = new VoxelStore();
         voxelStore->setVoxelsDeque(voxels);
         voxelStore->convertToArray();
+        double end = timer.seconds();
+        std::cout << "Time of converting View to VoxelStore: " << end - after_quant << "\n";
         fileMaker::saveSchematic("hand_02", voxelStore);
+
+        std::cout << "Time: " << end - start << "\n";
+
+        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " " << voxelView(104583 - 1, 2) << "\n";
+        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " " << voxelView((N0 / 2) - 1, 2) << "\n";
+        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " " << voxelView(N0 - 1, 2) << "\n";
 
         Kokkos::finalize();
     }
