@@ -10,6 +10,7 @@
 #include "../utils/ObjectStore.h"
 #include "../utils/fileMaker.h"
 #include "../algorithm/algorithm.h"
+#include "Kokkos_Sort.hpp"
 
 bool kokkos_arg = false;
 bool kokkos_team = false;
@@ -88,13 +89,54 @@ struct initView {
     }
 };
 
+
+struct voxelDeduplicate {
+
+    Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int* start_point;
+    std::deque<Voxel> *voxels_deque;
+
+    KOKKOS_INLINE_FUNCTION
+    explicit voxelDeduplicate(Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_, int *start_point_, std::deque<Voxel> *voxelDeque_) noexcept
+            : start_point(start_point_), voxels_deque(voxelDeque_), voxelView(voxelView_) {}
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const int i) const {
+        int start = start_point[i];
+        auto voxel_deque = voxels_deque[i];
+        auto vmap = std::map<int, std::map<int, std::map<int, int>>>();
+        int deque_size = (int) voxel_deque.size();
+        int temp_size = 0;
+        for (int j = 0; j < deque_size; j++) {
+            auto temp_v = voxel_deque.at(j);
+            if (vmap.find(temp_v.getX()) == vmap.end()) {
+                vmap[temp_v.getX()] = std::map<int, std::map<int, int>>();
+            }
+            if (vmap[temp_v.getX()].find(temp_v.getY()) == vmap[temp_v.getX()].end()) {
+                vmap[temp_v.getX()][temp_v.getY()] = std::map<int, int>();
+            }
+            if (vmap[temp_v.getX()][temp_v.getY()].find(temp_v.getZ()) == vmap[temp_v.getX()][temp_v.getY()].end()) {
+                vmap[temp_v.getX()][temp_v.getY()][temp_v.getZ()] = temp_v.getColor();
+            } else {
+                continue;
+            }
+            voxelView(start + temp_size, 0) = temp_v.getX();
+            voxelView(start + temp_size, 1) = temp_v.getY();
+            voxelView(start + temp_size, 2) = temp_v.getZ();
+            temp_size++;
+        }
+        std::cout << "Size: " << temp_size << std::endl;
+    }
+
+};
+
 struct QuantizationTeam {
 
 };
 
 int algorithm::main(int argc, char *argv[]) {
-    int scale = 3;
-    kokkos_test = false;
+    int scale = 2;
+    kokkos_test = true;
 
     if (!kokkos_arg && !kokkos_team && !kokkos_test) {
 //        auto start = std::chrono::high_resolution_clock::now();
@@ -102,7 +144,7 @@ int algorithm::main(int argc, char *argv[]) {
         double start = timer.seconds();
         auto *objectStore = new ObjectStore();
         auto *voxelStore = new VoxelStore();
-        fileMaker::loadObject("mickey_mouse.obj", objectStore, scale);
+        fileMaker::loadObject("hand_02.obj", objectStore, scale);
         auto faces = objectStore->getFaces();
         double obj = timer.seconds();
         std::cout << "Object loaded in " << obj - start << " seconds" << std::endl;
@@ -172,7 +214,7 @@ int algorithm::main(int argc, char *argv[]) {
 
         // Load model from .obj file
         auto *objectStore = new ObjectStore();
-        fileMaker::loadObject("mickey_mouse.obj", objectStore, scale);
+        fileMaker::loadObject("hand_02.obj", objectStore, scale);
 //        std::cout << objectStore->getSizeFaces() << "\n";
         auto faces = objectStore->getFaces();
         auto faces_size = objectStore->getSizeFaces();
@@ -217,16 +259,48 @@ int algorithm::main(int argc, char *argv[]) {
 
         // write voxels from View to VoxelStore
         std::deque<Voxel> voxels;
+        std::deque<Voxel> temp_voxels_deque_1;
+        std::deque<Voxel> temp_voxels_deque_2;
+        std::deque<Voxel> temp_voxels_deque_3;
+        std::deque<Voxel> temp_voxels_deque_4;
+        int deque_start_points[4] = {0, (int) std::floor(N0 / 4), (int) std::floor(N0 / 4) * 2, (int) std::floor(N0 / 4) * 3};
+        for (int i = 0; i < N0; i++) {
+            if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
+//                voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
+                if (i <= (int) std::floor(N0 / 4)) {
+                    temp_voxels_deque_1.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
+                } else if (i <= (int) std::floor(N0 / 4) * 2) {
+                    temp_voxels_deque_2.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
+                } else if (i <= (int) std::floor(N0 / 4) * 3) {
+                    temp_voxels_deque_3.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
+                } else {
+                    temp_voxels_deque_4.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
+                }
+                voxelView(i, 0) = safety;
+                voxelView(i, 1) = safety;
+                voxelView(i, 2) = safety;
+            }
+        }
+        double loop = timer.seconds();
+        std::deque<Voxel> temp_voxels[4] = {temp_voxels_deque_1, temp_voxels_deque_2, temp_voxels_deque_3, temp_voxels_deque_4};
+        // TODO: mocked thread count
+        Kokkos::parallel_for(4, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
+        std::cout << "Time of loop: " << loop - after_quant << "\n";
+        auto* voxelStore = new VoxelStore();
+//        std::deque<Voxel> temp_voxels_deque_3;
+//        std::deque<Voxel> temp_voxels_deque_4;
+        // try to split into block and remove duplicates then merge
+        // or try to give thread its memory view
         for (int i = 0; i < N0; i++) {
             if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
                 voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
             }
         }
-        auto* voxelStore = new VoxelStore();
         voxelStore->setVoxelsDeque(voxels);
         voxelStore->convertToArray();
+        std::cout << "Total voxels in deque: " << voxels.size() << " || in View: " << N0 << "\n";
         double end = timer.seconds();
-        std::cout << "Time of converting View to VoxelStore: " << end - after_quant << "\n";
+        std::cout << "Time of converting View to VoxelStore: " << end - loop << "\n";
         fileMaker::saveSchematic("hand_02", voxelStore);
 
         std::cout << "Time: " << end - start << "\n";
