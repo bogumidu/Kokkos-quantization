@@ -11,6 +11,7 @@
 #include "../utils/fileMaker.h"
 #include "../algorithm/algorithm.h"
 #include "Kokkos_Sort.hpp"
+//#include <execution>
 
 bool kokkos_arg = false;
 bool kokkos_team = false;
@@ -23,12 +24,12 @@ int stride_voxel;
 
 struct quantization {
 
-    Kokkos::View<Voxel*, Kokkos::LayoutRight, Kokkos::HostSpace> sh_mem;
+    Kokkos::View<Voxel *, Kokkos::LayoutRight, Kokkos::HostSpace> sh_mem;
     Face *faces;
 
     KOKKOS_INLINE_FUNCTION
     explicit
-    quantization(Face *faces, Kokkos::View<Voxel*, Kokkos::LayoutRight, Kokkos::HostSpace> sh_mem_) noexcept
+    quantization(Face *faces, Kokkos::View<Voxel *, Kokkos::LayoutRight, Kokkos::HostSpace> sh_mem_) noexcept
             : faces(faces), sh_mem(sh_mem_) {}
 
     // this is a macro that allows method to run on CUDA devices when using CUDA
@@ -45,13 +46,14 @@ struct quantization {
 
 struct quantizationTest {
 
-    Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
-    int* start_point;
-    Face* faces;
+    Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int *start_point;
+    Face *faces;
 
     KOKKOS_INLINE_FUNCTION
     explicit
-    quantizationTest(Face *faces_, int *start_point_, Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
+    quantizationTest(Face *faces_, int *start_point_,
+                     Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
             : faces(faces_), start_point(start_point_), voxelView(voxelView_) {}
 
     KOKKOS_INLINE_FUNCTION
@@ -74,11 +76,11 @@ struct quantizationTest {
 };
 
 struct initView {
-    Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
 
     KOKKOS_INLINE_FUNCTION
     explicit
-    initView(Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
+    initView(Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_) noexcept
             : voxelView(voxelView_) {}
 
     KOKKOS_INLINE_FUNCTION
@@ -92,12 +94,13 @@ struct initView {
 
 struct voxelDeduplicate {
 
-    Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
-    int* start_point;
+    Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int *start_point;
     std::deque<Voxel> *voxels_deque;
 
     KOKKOS_INLINE_FUNCTION
-    explicit voxelDeduplicate(Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_, int *start_point_, std::deque<Voxel> *voxelDeque_) noexcept
+    explicit voxelDeduplicate(Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_,
+                              int *start_point_, std::deque<Voxel> *voxelDeque_) noexcept
             : start_point(start_point_), voxels_deque(voxelDeque_), voxelView(voxelView_) {}
 
     KOKKOS_INLINE_FUNCTION
@@ -130,9 +133,148 @@ struct voxelDeduplicate {
 
 };
 
-struct QuantizationTeam {
+// TODO: remove sorting, reformat code and prints
 
+
+struct voxelSort {
+    Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int start_point;
+    int end_point;
+    std::deque<int> *view_points;
+    int div_steps;
+
+
+    KOKKOS_INLINE_FUNCTION
+    explicit voxelSort(Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_, int start_point_,
+                       int end_point_, std::deque<int> *view_points_, int div_steps_ = 0) noexcept
+            : voxelView(voxelView_), start_point(start_point_), end_point(end_point_), view_points(view_points_),
+              div_steps(div_steps_) {}
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const int i) const {
+        // TODO: this is mocked for nonCUDA threads
+        auto proccessor_count = std::thread::hardware_concurrency();
+        int k;
+        int j;
+        if (div_steps == -1) {
+            k = view_points->at(2 * i + 1);
+            j = view_points->at(2 * i);
+        } else {
+            k = start_point;
+            std::cout << "k: " << k << std::endl;
+            j = end_point;
+            std::cout << "j: " << j << std::endl;
+        }
+        int pivot_voxel[3] = {voxelView(end_point / 2, 0), voxelView(end_point / 2, 1), voxelView(end_point / 2, 2)};
+        int temp_voxel[3];
+        while (k <= j) {
+            while (voxelView(k, 0) < pivot_voxel[0] ||
+                   (voxelView(k, 0) == pivot_voxel[0] && voxelView(k, 1) < pivot_voxel[1]) ||
+                   (voxelView(k, 0) == pivot_voxel[0] && voxelView(k, 1) == pivot_voxel[1] &&
+                    voxelView(k, 2) < pivot_voxel[2])) {
+                k++;
+//                std::cout << "k: " << k << std::endl;
+            }
+            while (voxelView(j, 0) > pivot_voxel[0] ||
+                   (voxelView(j, 0) == pivot_voxel[0] && voxelView(j, 1) > pivot_voxel[1]) ||
+                   (voxelView(j, 0) == pivot_voxel[0] && voxelView(j, 1) == pivot_voxel[1] &&
+                    voxelView(j, 2) > pivot_voxel[2])) {
+                j--;
+//                std::cout << "j: " << j << std::endl;
+            }
+            if (k <= j) {
+                temp_voxel[0] = voxelView(k, 0);
+                temp_voxel[1] = voxelView(k, 1);
+                temp_voxel[2] = voxelView(k, 2);
+                voxelView(k, 0) = voxelView(j, 0);
+                voxelView(k, 1) = voxelView(j, 1);
+                voxelView(k, 2) = voxelView(j, 2);
+                voxelView(j, 0) = temp_voxel[0];
+                voxelView(j, 1) = temp_voxel[1];
+                voxelView(j, 2) = temp_voxel[2];
+                k++;
+                j--;
+//                std::cout << "Swapped" << std::endl;
+            }
+        }
+        if (div_steps >= 0) {
+            auto temp_int = (int) pow(2, div_steps);
+            std::cout << "temp_int: " << temp_int << std::endl;
+            if (j > start_point && temp_int < proccessor_count)
+                voxelSort(voxelView, start_point, j, view_points, div_steps + 1)(0);
+            if (k < end_point && temp_int < proccessor_count)
+                voxelSort(voxelView, k, end_point, view_points, div_steps + 1);
+            if (temp_int >= proccessor_count) {
+                view_points->push_back(start_point);
+                view_points->push_back(end_point);
+            }
+            // 1st case is exit point of recursion so it needs to be only one initializing parallel_for
+            if (div_steps == 0) {
+                Kokkos::parallel_for(proccessor_count, voxelSort(voxelView, start_point, end_point, view_points, -1));
+            }
+        } else {
+            std::cout << "Start: " << start_point << " End: " << end_point << std::endl;
+            if (j > start_point)
+                voxelSort(voxelView, start_point, j, view_points, -1);
+            if (k < end_point)
+                voxelSort(voxelView, k, end_point, view_points, -1);
+        }
+    }
 };
+
+
+struct voxelQuickSort {
+    Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
+    int start_point;
+    int end_point;
+
+    KOKKOS_INLINE_FUNCTION
+    explicit voxelQuickSort(Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView_, int start_point_,
+                       int end_point_) noexcept
+            : voxelView(voxelView_), start_point(start_point_), end_point(end_point_) {}
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const int _) const {
+        int k;
+        int j;
+        k = start_point;
+        j = end_point;
+        int pivot_voxel[3] = {voxelView(end_point / 2, 0), voxelView(end_point / 2, 1), voxelView(end_point / 2, 2)};
+        int temp_voxel[3];
+        while (k <= j) {
+            while (voxelView(k, 0) < pivot_voxel[0] ||
+                   (voxelView(k, 0) == pivot_voxel[0] && voxelView(k, 1) < pivot_voxel[1]) ||
+                   (voxelView(k, 0) == pivot_voxel[0] && voxelView(k, 1) == pivot_voxel[1] &&
+                    voxelView(k, 2) < pivot_voxel[2])) {
+                k++;
+            }
+            while (voxelView(j, 0) > pivot_voxel[0] ||
+                   (voxelView(j, 0) == pivot_voxel[0] && voxelView(j, 1) > pivot_voxel[1]) ||
+                   (voxelView(j, 0) == pivot_voxel[0] && voxelView(j, 1) == pivot_voxel[1] &&
+                    voxelView(j, 2) > pivot_voxel[2])) {
+                j--;
+            }
+            if (k <= j) {
+                temp_voxel[0] = voxelView(k, 0);
+                temp_voxel[1] = voxelView(k, 1);
+                temp_voxel[2] = voxelView(k, 2);
+                voxelView(k, 0) = voxelView(j, 0);
+                voxelView(k, 1) = voxelView(j, 1);
+                voxelView(k, 2) = voxelView(j, 2);
+                voxelView(j, 0) = temp_voxel[0];
+                voxelView(j, 1) = temp_voxel[1];
+                voxelView(j, 2) = temp_voxel[2];
+                k++;
+                j--;
+            }
+        }
+        if (j > start_point)
+            voxelQuickSort(voxelView, start_point, j)(0);
+        if (k < end_point)
+            voxelQuickSort(voxelView, k, end_point)(0);
+    }
+};
+
 
 int algorithm::main(int argc, char *argv[]) {
     int scale = 2;
@@ -182,7 +324,7 @@ int algorithm::main(int argc, char *argv[]) {
         int kokkosArgc = argc + 1;
         Kokkos::initialize(kokkosArgc, kokkosArgs);
 
-        Kokkos::View<Voxel*, Kokkos::LayoutRight, Kokkos::HostSpace> execution_space("execution_space", N0);
+        Kokkos::View<Voxel *, Kokkos::LayoutRight, Kokkos::HostSpace> execution_space("execution_space", N0);
         auto *objectStore = new ObjectStore();
         auto *voxelStore = new VoxelStore();
         fileMaker::loadObject("hand_02.obj", objectStore);
@@ -231,20 +373,12 @@ int algorithm::main(int argc, char *argv[]) {
             start_point[i] = temp_vox;
             temp_vox += voxel_change;
         }
-//        std::for_each(faces, faces + objectStore->getSizeFaces(), [&tes_max](Face &face) {
-//            int tes = getTessellationLevels(face);
-//            if (tes > tes_max) {
-//                tes_max = tes;
-//            }
-//        });
 
         double after_tes = timer.seconds();
-        std::cout << "Time of finding max teselation: " << after_tes - after_obj << "\n";
-//        stride_voxel = (int) pow(4, vox_total) * 3;
-//        N0 = (int) (objectStore->getSizeFaces() * stride_voxel);
+        std::cout << "Time of building teselation points: " << after_tes - after_obj << "\n";
         N0 = (int) vox_total;
         std::cout << "Total voxels: " << N0 << "\n";
-        Kokkos::View<int*[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView ("VoxelStoreDuplicates", N0);
+        Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView("VoxelStoreDuplicates", N0);
 
         double after_view = timer.seconds();
         std::cout << "Time of View allocation: " << after_view - after_tes << "\n";
@@ -258,12 +392,16 @@ int algorithm::main(int argc, char *argv[]) {
         std::cout << "Time of quantization: " << after_quant - after_init << "\n";
 
         // write voxels from View to VoxelStore
+//        std::sort(std::execution::par_unseq)
+        // define number of processors to limit sort recursion number
+        const auto processor_count = std::thread::hardware_concurrency();
         std::deque<Voxel> voxels;
         std::deque<Voxel> temp_voxels_deque_1;
         std::deque<Voxel> temp_voxels_deque_2;
         std::deque<Voxel> temp_voxels_deque_3;
         std::deque<Voxel> temp_voxels_deque_4;
-        int deque_start_points[4] = {0, (int) std::floor(N0 / 4), (int) std::floor(N0 / 4) * 2, (int) std::floor(N0 / 4) * 3};
+        int deque_start_points[4] = {0, (int) std::floor(N0 / 4), (int) std::floor(N0 / 4) * 2,
+                                     (int) std::floor(N0 / 4) * 3};
         for (int i = 0; i < N0; i++) {
             if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
 //                voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
@@ -281,12 +419,16 @@ int algorithm::main(int argc, char *argv[]) {
                 voxelView(i, 2) = safety;
             }
         }
-        double loop = timer.seconds();
-        std::deque<Voxel> temp_voxels[4] = {temp_voxels_deque_1, temp_voxels_deque_2, temp_voxels_deque_3, temp_voxels_deque_4};
-        // TODO: mocked thread count
+//        std::deque<int> *temp_voxels_deque = nullptr;
+//        Kokkos::parallel_for(1, voxelSort(voxelView, 0, N0 - 1, temp_voxels_deque, 0));
+//        voxelQuickSort(voxelView, 0, N0 - 1)(0);
+        std::deque<Voxel> temp_voxels[4] = {temp_voxels_deque_1, temp_voxels_deque_2, temp_voxels_deque_3,
+                                            temp_voxels_deque_4};
+//        // TODO: mocked thread count
         Kokkos::parallel_for(4, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
+        double loop = timer.seconds();
         std::cout << "Time of loop: " << loop - after_quant << "\n";
-        auto* voxelStore = new VoxelStore();
+        auto *voxelStore = new VoxelStore();
 //        std::deque<Voxel> temp_voxels_deque_3;
 //        std::deque<Voxel> temp_voxels_deque_4;
         // try to split into block and remove duplicates then merge
@@ -305,9 +447,12 @@ int algorithm::main(int argc, char *argv[]) {
 
         std::cout << "Time: " << end - start << "\n";
 
-        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " " << voxelView(104583 - 1, 2) << "\n";
-        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " " << voxelView((N0 / 2) - 1, 2) << "\n";
-        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " " << voxelView(N0 - 1, 2) << "\n";
+        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " "
+                  << voxelView(104583 - 1, 2) << "\n";
+        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " "
+                  << voxelView((N0 / 2) - 1, 2) << "\n";
+        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " "
+                  << voxelView(N0 - 1, 2) << "\n";
 
         Kokkos::finalize();
     }

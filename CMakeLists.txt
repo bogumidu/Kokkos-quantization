@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(project2)
+#set(CMAKE_GENERATOR "Visual Studio 17 2022")
+#add_compile_options(/openmp)
 
 add_subdirectory(src)
 add_subdirectory(build)

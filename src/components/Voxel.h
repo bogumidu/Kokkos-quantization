@@ -39,6 +39,14 @@ public:
 
     bool operator!=(const Voxel &rhs) const;
 
+    bool operator<(const Voxel &rhs) const;
+
+    bool operator>(const Voxel &rhs) const;
+
+    bool operator<=(const Voxel &rhs) const;
+
+    bool operator>=(const Voxel &rhs) const;
+
 };
 
 

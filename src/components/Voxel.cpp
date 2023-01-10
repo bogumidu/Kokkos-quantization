@@ -63,5 +63,22 @@ Voxel::Voxel(int x, int y, int z, int color) {
 
 }
 
+bool Voxel::operator<(const Voxel &rhs) const {
+    if (x < rhs.x && y < rhs.y && z < rhs.z) return true;
+    return false;
+}
+
+bool Voxel::operator>(const Voxel &rhs) const {
+    return rhs < *this;
+}
+
+bool Voxel::operator<=(const Voxel &rhs) const {
+    return !(rhs < *this);
+}
+
+bool Voxel::operator>=(const Voxel &rhs) const {
+    return !(*this < rhs);
+}
+
 Voxel::Voxel() = default;
 
