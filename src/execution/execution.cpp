@@ -112,7 +112,7 @@ struct voxelDeduplicate {
 
 
 int algorithm::main(int argc, char *argv[]) {
-    int scale = 2;
+    int scale = 12;
     kokkos_arg = true;
 
     /**
@@ -183,7 +183,7 @@ int algorithm::main(int argc, char *argv[]) {
 
         // Load model from .obj file
         auto *objectStore = new ObjectStore();
-        fileMaker::loadObject("hand_02.obj", objectStore, scale);
+        fileMaker::loadObject("skull.obj", objectStore, scale);
 //        std::cout << objectStore->getSizeFaces() << "\n";
         auto faces = objectStore->getFaces();
         auto faces_size = objectStore->getSizeFaces();
@@ -274,12 +274,12 @@ int algorithm::main(int argc, char *argv[]) {
 
         std::cout << "Time: " << end - start << "\n";
 
-        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " "
-                  << voxelView(104583 - 1, 2) << "\n";
-        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " "
-                  << voxelView((N0 / 2) - 1, 2) << "\n";
-        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " "
-                  << voxelView(N0 - 1, 2) << "\n";
+//        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " "
+//                  << voxelView(104583 - 1, 2) << "\n";
+//        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " "
+//                  << voxelView((N0 / 2) - 1, 2) << "\n";
+//        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " "
+//                  << voxelView(N0 - 1, 2) << "\n";
 
         Kokkos::finalize();
     }

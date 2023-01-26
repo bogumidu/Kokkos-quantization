@@ -2,6 +2,7 @@
 // Created by bogum on 30.09.2022.
 //
 
+#include <limits>
 #include "ObjectStore.h"
 
 ObjectStore::ObjectStore() {

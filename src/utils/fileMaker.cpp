@@ -57,8 +57,12 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
             current_line++;
             if (line.empty() || line[0] == '#') continue;
             std::list<std::string> cmd = fileMaker::utils::split(line, ' ');
+            if (cmd.empty()) continue;
             if (cmd.front() == "v" || cmd.front() == "V") {
-                if (cmd.size() != 4) throw std::runtime_error("Command 'v' should have 3 arguments at line");
+                if (cmd.size() != 4) {
+                    std::cout << current_line << "\n";
+                    throw std::runtime_error("Command 'v' should have 3 arguments at line %d");
+                }
                 try {
                     double z = std::stod(cmd.back()) * ratio;
                     cmd.pop_back();
@@ -232,12 +236,17 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore 
 }
 
 std::list<std::string> fileMaker::utils::split(std::string &str, char delimiter) {
+    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     std::list<std::string> result;
     int start = 0;
     for (int j = 0; j < str.length(); j++) {
         if (str[j] == delimiter) {
-            result.push_back(str.substr(start, j));
+            result.push_back(str.substr(start, j - start));
             start = j + 1;
+            while (str[start] == delimiter) {
+                start++;
+                j++;
+            }
         }
     }
     if (start < str.length()) {
@@ -308,7 +317,7 @@ void fileMaker::utils::preprocessVoxels(Voxel *voxels, int voxels_size) {
 }
 
 int fileMaker::utils::parseInt(const std::string &s) {
-    if (s.empty()) return -1;
+    if (s.empty() || (s.length() == 1 && s[0] == '\r')) return -1;
     int result = std::stoi(s);
     return result;
 }
