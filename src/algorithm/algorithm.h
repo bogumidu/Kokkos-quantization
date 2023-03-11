@@ -1,4 +1,4 @@
-//
+//766231
 // Created by bogum on 11.10.2022.
 //
 
@@ -8,7 +8,6 @@
 #include "../components/Voxel.h"
 #include "../utils/VoxelStore.h"
 #include "../components/Face.h"
-#include "Kokkos_View.hpp"
 #include <vector>
 
 namespace algorithm {

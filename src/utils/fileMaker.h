@@ -10,7 +10,6 @@
 #include "../components/Voxel.h"
 #include "ObjectStore.h"
 #include "VoxelStore.h"
-#include "Kokkos_View.hpp"
 
 namespace fileMaker {
 
