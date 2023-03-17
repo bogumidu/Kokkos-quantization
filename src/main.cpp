@@ -1,6 +1,7 @@
 #include <iostream>
-#include <cstring>
 #include "execution/execution.h"
+
+int scale = 12;
 
 int main(int argc, char *argv[]) {
 
@@ -16,22 +17,9 @@ int main(int argc, char *argv[]) {
         std::cout << argv[i] << "\n";
     }
 
-    // TODO: need to change compiler
 
-    algorithm::main(argc, argv);
 
-// Po włączeniu CUDA, kokkos wymaga NVCC.
-// W instrukcji podane jest, że trzeba zmienić CMAKE_CXX_COMPILER na nvcc_wrapper z kokkosa.
-// Ten wrapper jest skryptem bashowym i nie uruchamia się na windowsie.
-
-// Czy teselacja powinna odbywać się przed voxelizacją w kokosie czy podczas
-
-// Pierwsza wersja bez wielowatkowosci
-
-// Porownania java -> cpp bez multithread
-// porownanie cpp -> kokkos (team policy/openMP wg uznania)
-
-// Najpierw zrobic pod windows nastyepnie adaptacja pod CUDA
+    execution::main(argc, argv);
 
     return 0;
 }
