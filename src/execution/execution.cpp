@@ -50,6 +50,7 @@ struct quantization {
     }
 };
 
+
 struct initView {
     Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView;
 
@@ -106,8 +107,6 @@ struct voxelDeduplicate {
     }
 
 };
-
-// TODO: remove sorting, reformat code and prints
 
 
 int execution::main(int argc, char *argv[]) {
@@ -178,53 +177,74 @@ int execution::main(int argc, char *argv[]) {
 
         Kokkos::initialize(Kokkos::InitializationSettings().set_num_threads(thread_count));
         {
-            // timer
             Kokkos::Timer timer;
-            double start = timer.seconds();
+            double start_program = timer.seconds();
 
-            // Load model from .obj file
+            /**
+             * Container objects initialization
+             * Load object into ObjectStore container
+             * faces - face array before tessellation
+             * start_point - array of face start index after tessellation
+             * vox_total - calculated size of voxelView
+             */
+
             auto *objectStore = new ObjectStore();
             fileMaker::loadObject("skull.obj", objectStore, scale);
-//        std::cout << objectStore->getSizeFaces() << "\n";
             auto faces = objectStore->getFaces();
             auto faces_size = objectStore->getSizeFaces();
             int start_point[faces_size];
             double after_obj = timer.seconds();
-            std::cout << "Object load time: " << after_obj - start << "\n";
             double vox_total = 0;
             int temp_vox = 0;
             for (int i = 0; i < faces_size - 1; i++) {
                 int tes = algorithm::getTessellationLevels(faces[i]);
-                int voxel_change = pow(4, tes) * 3;
+                int voxel_change = (int) pow(4, tes) * 3;
                 vox_total += voxel_change;
                 start_point[i] = temp_vox;
                 temp_vox += voxel_change;
             }
 
-            double after_tes = timer.seconds();
-            std::cout << "Time of building teselation points: " << after_tes - after_obj << "\n";
-            N0 = (int) vox_total;
-            std::cout << "Total voxels: " << N0 << "\n";
-            Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView("VoxelStoreDuplicates", N0);
+            if (vox_total < 1000000) std::cout << "Small voxel count may lead to inaccurate results. Calculated voxel count is: " << vox_total << "\n";
 
-            double after_view = timer.seconds();
-            std::cout << "Time of View allocation: " << after_view - after_tes << "\n";
+            /**
+             * View initialization
+             * N0 - calculated size of voxelView
+             * Kokkos::parallerl_for(N0, initView(voxelView)) - fill voxelView with INT_MIN value
+             */
+
+            N0 = (int) vox_total;
+            Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView("VoxelStoreDuplicates", N0);
             Kokkos::parallel_for(N0, initView(voxelView));
-            double after_init = timer.seconds();
-            std::cout << "Time of View initiation: " << after_init - after_view << "\n";
-            // quantization
-            //Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantization(faces, start_point, voxelView));
+
+            /**
+             * quantization
+             * Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantization(faces, start_point, voxelView));
+             * objectStore->getSizeFaces() - 1 - size of faces array
+             * quantization(faces, start_point, voxelView) - quantization functor
+             * faces - faces array
+             * start_point - array of index shifts for faces after teselation
+             * voxelView - storage for voxels
+             * Kokkos::fence(); - ensures parallel calculations are finished
+             */
+
+            double start_quant = timer.seconds();
             Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantization(faces, start_point, voxelView));
             Kokkos::fence();
-            double after_quant = timer.seconds();
-            std::cout << "Time of quantization: " << after_quant - after_init << "\n";
+            double stop_quant = timer.seconds();
+            std::cout << "Time of quantization: " << stop_quant - start_quant << "\n";
 
-            // write voxels from View to VoxelStore
-//        std::sort(std::execution::par_unseq)
-            // define number of processors to limit sort recursion number
-            const auto processor_count = std::thread::hardware_concurrency();
+            /**
+             * Voxels deduplication algorithm
+             * Split voxelView into thread_count of voxel std::deque
+             * Kokkos::parallel_for(thread_count, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
+             * thread_count - number of std::deque in temp_voxels array
+             * voxelDeduplicate(voxelView, deque_start_points, temp_voxels)); - deduplication functor
+             * voxelView - storage for voxels
+             * deque_start_points - array of start index in voxelView
+             * temp_voxels - array of voxel std::deque
+             */
 
-            // thread count deduplication
+            double start_dedup = timer.seconds();
             auto* temp_voxels = new std::deque<Voxel>[thread_count];
             int deque_size = std::floor(N0 / thread_count);
             int index = 0;
@@ -243,43 +263,17 @@ int execution::main(int argc, char *argv[]) {
             }
 
 
-            std::deque<Voxel> voxels;
-//            std::deque<Voxel> temp_ voxels_deque_1;
-//            std::deque<Voxel> temp_voxels_deque_2;
-//            std::deque<Voxel> temp_voxels_deque_3;
-//            std::deque<Voxel> temp_voxels_deque_4;
-//            int deque_start_points[4] = {0, (int) std::floor(N0 / 4), (int) std::floor(N0 / 4) * 2,
-//                                         (int) std::floor(N0 / 4) * 3};
-//            for (int i = 0; i < N0; i++) {
-//                if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
-////                voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-//                    if (i <= (int) std::floor(N0 / 4)) {
-//                        temp_voxels_deque_1.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-//                    } else if (i <= (int) std::floor(N0 / 4) * 2) {
-//                        temp_voxels_deque_2.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-//                    } else if (i <= (int) std::floor(N0 / 4) * 3) {
-//                        temp_voxels_deque_3.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-//                    } else {
-//                        temp_voxels_deque_4.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-//                    }
-//                    voxelView(i, 0) = safety;
-//                    voxelView(i, 1) = safety;
-//                    voxelView(i, 2) = safety;
-//                }
-//            }
-//        std::deque<int> *temp_voxels_deque = nullptr;
-//            std::deque<Voxel> temp_voxels[4] = {temp_voxels_deque_1, temp_voxels_deque_2, temp_voxels_deque_3,
-//                                                temp_voxels_deque_4};
-//        // TODO: mocked thread count
             Kokkos::parallel_for(thread_count, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
             Kokkos::fence();
-            double loop = timer.seconds();
-            std::cout << "Time of loop: " << loop - after_quant << "\n";
+            double stop_dedup = timer.seconds();
+            std::cout << "Time of deduplication: " << stop_dedup - start_dedup << "\n";
+
+            /**
+             * voxels - final voxel std::deque
+             */
+
+            std::deque<Voxel> voxels;
             auto *voxelStore = new VoxelStore();
-//        std::deque<Voxel> temp_voxels_deque_3;
-//        std::deque<Voxel> temp_voxels_deque_4;
-            // try to split into block and remove duplicates then merge
-            // or try to give thread its memory view
             for (int i = 0; i < N0; i++) {
                 if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
                     voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
@@ -288,18 +282,10 @@ int execution::main(int argc, char *argv[]) {
             voxelStore->setVoxelsDeque(voxels);
             voxelStore->convertToArray();
             std::cout << "Total voxels in deque: " << voxels.size() << " || in View: " << N0 << "\n";
-            double end = timer.seconds();
-            std::cout << "Time of converting View to VoxelStore: " << end - loop << "\n";
             fileMaker::saveSchematic("hand_02", voxelStore);
 
-            std::cout << "Time: " << end - start << "\n";
-
-//        std::cout << "last voxel: " << voxelView(104583 - 1, 0) << " " << voxelView(104583 - 1, 1) << " "
-//                  << voxelView(104583 - 1, 2) << "\n";
-//        std::cout << "last voxel: " << voxelView((N0 / 2) - 1, 0) << " " << voxelView((N0 / 2) - 1, 1) << " "
-//                  << voxelView((N0 / 2) - 1, 2) << "\n";
-//        std::cout << "last voxel: " << voxelView(N0 - 1, 0) << " " << voxelView(N0 - 1, 1) << " "
-//                  << voxelView(N0 - 1, 2) << "\n";
+            double end_program = timer.seconds();
+            std::cout << "Total time: " << end_program - start_program << "\n";
         }
         Kokkos::finalize();
     }
