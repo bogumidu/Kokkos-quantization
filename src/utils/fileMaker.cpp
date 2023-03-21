@@ -235,6 +235,19 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore 
     }
 }
 
+void fileMaker::loadFile::generateLog(const std::string &fileName, int thread_count, int scale, int voxels, int view_size, double time) {
+    std::ofstream file(fileName + ".log", std::ios::app);
+
+    if (!file) {
+        std::cerr << "Filed to open log file\n";
+        return;
+    }
+
+    file << "Model: " << fileName << ".obj Threads: " << thread_count << " Scale: " << scale
+    << " Voxels: " << voxels << " || " << view_size << " Time: " << time << std::endl;
+    file.close();
+}
+
 std::list<std::string> fileMaker::utils::split(std::string &str, char delimiter) {
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     std::list<std::string> result;

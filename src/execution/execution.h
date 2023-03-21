@@ -6,7 +6,7 @@
 #define PROJECT2_EXECUTION_H
 namespace execution {
     int main(int argc, char *argv[]);
-    void singleCoreRun(int scale, std::string* fileName);
-    void openMPRun(int scale, std::string* fileName, int core_count);
+    void runSingleCore(std::string& fileName,int scale,bool createLog,bool debug);
+    void runMultiCore(std::string& fileName, int thread_count, int scale, bool createLog, bool debug);
 }
 #endif //PROJECT2_EXECUTION_H

@@ -22,6 +22,7 @@ namespace fileMaker {
         std::vector<Voxel> loadSchematic(const std::string& fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
         void saveSchematic(const std::string &fileName, VoxelStore *voxelStore);
+        void generateLog(const std::string &fileName, int thread_count, int scale, int voxels, int view_size, double time);
     }
 
     inline namespace utils {
