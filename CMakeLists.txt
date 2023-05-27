@@ -10,6 +10,8 @@ set(project2_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(project2_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc")
+set(SOURCE_FILES main.cpp)
 
 set(Kokkos_ENABLE_OPENMP 1)
 set(Kokkos_OMP_PROC_BIND 1)

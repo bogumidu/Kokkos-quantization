@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <set>
 #include <deque>
+#include <sstream>
 
 template<typename T>
 T swap_endian(T u) {
@@ -236,7 +237,9 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore 
 }
 
 void fileMaker::loadFile::generateLog(const std::string &fileName, int thread_count, int scale, int voxels, int view_size, double time) {
-    std::ofstream file(fileName + ".log", std::ios::app);
+    std::ostringstream oss;
+    oss << fileName << "_t-" << thread_count << "_s-" << thread_count << ".log";
+    std::ofstream file(oss.str(), std::ios::app);
 
     if (!file) {
         std::cerr << "Filed to open log file\n";
