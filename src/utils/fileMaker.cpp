@@ -102,11 +102,11 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
                 }
             } else if (cmd.front() == "g" || cmd.front() == "G") {
                 if (cmd.size() == 1) continue;
-                auto* temp_group = &cmd.back();
+                auto *temp_group = &cmd.back();
                 group = *temp_group;
             } else if (cmd.front() == "usemtl") {
                 if (cmd.size() == 1) continue;
-                auto* temp_material = &cmd.back();
+                auto *temp_material = &cmd.back();
                 material = *temp_material;
             } else if (cmd.front() == "f" || cmd.front() == "F") {
                 if (cmd.size() < 4) throw std::runtime_error("Command 'f' should have at least 3 arguments");
@@ -142,10 +142,10 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
             }
         }
         // pointer to dynamically allocated array
-        Face* faces_final = new Face[faces.size()];
-        auto* vertices_final = new std::vector<double>[vertices.size()];
-        auto* textures_final = new std::vector<double>[textures.size()];
-        auto* normals_final = new std::vector<double>[normals.size()];
+        Face *faces_final = new Face[faces.size()];
+        auto *vertices_final = new std::vector<double>[vertices.size()];
+        auto *textures_final = new std::vector<double>[textures.size()];
+        auto *normals_final = new std::vector<double>[normals.size()];
         for (int i = 0; i < faces.size(); i++) {
 //            std::cout << faces.at(i) << "\n";
 //            std::cout << i << "\n";
@@ -205,7 +205,7 @@ std::vector<Voxel> fileMaker::loadFile::loadSchematic(const std::string &fileNam
 void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore *voxelStore) {
     std::ofstream output("../schematics/" + fileName + ".schematic", std::ios::out | std::ios::binary);
     if (output.is_open()) {
-        auto* voxels = voxelStore->getVoxels();
+        auto *voxels = voxelStore->getVoxels();
         auto voxel_size = voxelStore->getSize();
         fileMaker::utils::preprocessVoxels(voxels, voxel_size);
         std::vector<int> palette;
@@ -236,7 +236,9 @@ void fileMaker::loadFile::saveSchematic(const std::string &fileName, VoxelStore 
     }
 }
 
-void fileMaker::loadFile::generateLog(const std::string &fileName, int thread_count, int scale, int voxels, int view_size, double time) {
+void
+fileMaker::loadFile::generateLog(const std::string &fileName, int thread_count, int scale, int voxels, int view_size,
+                                 double time) {
     std::ostringstream oss;
     oss << fileName << "_t-" << thread_count << "_s-" << thread_count << ".log";
     std::ofstream file(oss.str(), std::ios::app);
@@ -247,8 +249,12 @@ void fileMaker::loadFile::generateLog(const std::string &fileName, int thread_co
     }
 
     file << "Model: " << fileName << ".obj Threads: " << thread_count << " Scale: " << scale
-    << " Voxels: " << voxels << " || " << view_size << " Time: " << time << std::endl;
+         << " Voxels: " << voxels << " || " << view_size << " Time: " << time << std::endl;
     file.close();
+    std::ofstream csvFile("results.csv", std::ios::app);
+    csvFile << fileName << "," << thread_count << "," << scale << "," << view_size << "," << voxels << "," << time
+            << "\n";
+    csvFile.close();
 }
 
 std::list<std::string> fileMaker::utils::split(std::string &str, char delimiter) {

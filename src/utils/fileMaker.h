@@ -17,7 +17,7 @@ namespace fileMaker {
         void test();
     }
 
-    inline namespace loadFile{
+    inline namespace loadFile {
         void loadObject(const std::string& fileName, ObjectStore* objectStore, int ratio = 1);
         std::vector<Voxel> loadSchematic(const std::string& fileName);
 //        void assignPropperites(float *maxX) { *maxX = maxX; }
