@@ -6,6 +6,10 @@
 void displayHelp();
 
 
+void warn(std::string msg) {
+    printf("\e[0;33m%s\e[0m\n", msg.c_str());
+}
+
 int main(int argc, char *argv[]) {
 
     int thread_count = 1;
@@ -66,8 +70,10 @@ int main(int argc, char *argv[]) {
     << "Threads provided: " << thread_count << "\n";
 
     if (thread_count > 1) {
+        std::cout << "Running on Kokkos device" << "\n";
         execution::runMultiCore(fileName, thread_count, scale, createLog, debug);
     } else {
+        warn("Running on single core c++");
         execution::runSingleCore(fileName, scale, createLog, debug);
     }
 

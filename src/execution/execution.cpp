@@ -108,192 +108,6 @@ struct voxelDeduplicate {
 
 };
 
-
-int execution::main(int argc, char *argv[]) {
-    int scale = 30;
-    kokkos_arg = true;
-    int thread_count = 8;
-
-    /**
-     * Console arguments processing
-     */
-
-    char **kokkosArgs = new char *[argc + 1];
-    for (int i = 0; i < argc; i++) {
-        kokkosArgs[i] = argv[i];
-        std::cout << kokkosArgs[i] << std::endl;
-    }
-    kokkosArgs[argc] = (char *) &"";
-    int kokkosArgc = argc + 1;
-
-    if (!kokkos_arg) {
-
-        Kokkos::Timer timer;
-        double start = timer.seconds();
-
-        /**
-         * Container objects initialization
-         * Load object into ObjectStore container
-         * faces - face array
-         */
-
-        auto *objectStore = new ObjectStore();
-        auto *voxelStore = new VoxelStore();
-        fileMaker::loadObject("skull.obj", objectStore, scale);
-        auto faces = objectStore->getFaces();
-        double obj = timer.seconds();
-        std::cout << "Object loaded in " << obj - start << " seconds" << std::endl;
-
-        /**
-         * Sequential quantization with recursion
-         */
-
-        for (int i = 0; i < objectStore->getSizeFaces() - 1; i++) {
-            algorithm::quantizationAlgorithm(faces, algorithm::getTessellationLevels(faces[i]), i, voxelStore);
-        }
-        double quant = timer.seconds();
-        std::cout << "Quantization done in " << quant - obj << " seconds" << std::endl;
-
-        /**
-         * Deduplicate voxels
-         */
-
-        voxelStore->convertToArray();
-        double convert = timer.seconds();
-        std::cout << "Conversion done in " << convert - quant << " seconds" << std::endl;
-
-        /**
-         * Save voxels to file
-         */
-
-        fileMaker::saveSchematic("mickey_mouse", voxelStore);
-        double stop = timer.seconds();
-        std::cout << "Schematic saved in " << stop - convert << " seconds" << std::endl;
-        std::cout << "Total time: " << stop - start << "\n";
-    }
-
-    if (kokkos_arg) {
-
-
-        Kokkos::initialize(Kokkos::InitializationSettings().set_num_threads(thread_count));
-        {
-            Kokkos::Timer timer;
-            double start_program = timer.seconds();
-
-            /**
-             * Container objects initialization
-             * Load object into ObjectStore container
-             * faces - face array before tessellation
-             * start_point - array of face start index after tessellation
-             * vox_total - calculated size of voxelView
-             */
-
-            auto *objectStore = new ObjectStore();
-            fileMaker::loadObject("skull.obj", objectStore, scale);
-            auto faces = objectStore->getFaces();
-            auto faces_size = objectStore->getSizeFaces();
-            int start_point[faces_size];
-            double after_obj = timer.seconds();
-            double vox_total = 0;
-            int temp_vox = 0;
-            for (int i = 0; i < faces_size - 1; i++) {
-                int tes = algorithm::getTessellationLevels(faces[i]);
-                int voxel_change = (int) pow(4, tes) * 3;
-                vox_total += voxel_change;
-                start_point[i] = temp_vox;
-                temp_vox += voxel_change;
-            }
-
-            if (vox_total < 1000000) std::cout << "Small voxel count may lead to inaccurate results. Calculated voxel count is: " << vox_total << "\n";
-
-            /**
-             * View initialization
-             * N0 - calculated size of voxelView
-             * Kokkos::parallerl_for(N0, initView(voxelView)) - fill voxelView with INT_MIN value
-             */
-
-            N0 = (int) vox_total;
-            Kokkos::View<int *[3], Kokkos::MemoryTraits<Kokkos::RandomAccess>> voxelView("VoxelStoreDuplicates", N0);
-            Kokkos::parallel_for(N0, initView(voxelView));
-
-            /**
-             * quantization
-             * Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantization(faces, start_point, voxelView));
-             * objectStore->getSizeFaces() - 1 - size of faces array
-             * quantization(faces, start_point, voxelView) - quantization functor
-             * faces - faces array
-             * start_point - array of index shifts for faces after teselation
-             * voxelView - storage for voxels
-             * Kokkos::fence(); - ensures parallel calculations are finished
-             */
-
-            double start_quant = timer.seconds();
-            Kokkos::parallel_for(objectStore->getSizeFaces() - 1, quantization(faces, start_point, voxelView));
-            Kokkos::fence();
-            double stop_quant = timer.seconds();
-            std::cout << "Time of quantization: " << stop_quant - start_quant << "\n";
-
-            /**
-             * Voxels deduplication algorithm
-             * Split voxelView into thread_count of voxel std::deque
-             * Kokkos::parallel_for(thread_count, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
-             * thread_count - number of std::deque in temp_voxels array
-             * voxelDeduplicate(voxelView, deque_start_points, temp_voxels)); - deduplication functor
-             * voxelView - storage for voxels
-             * deque_start_points - array of start index in voxelView
-             * temp_voxels - array of voxel std::deque
-             */
-
-            double start_dedup = timer.seconds();
-            auto* temp_voxels = new std::deque<Voxel>[thread_count];
-            int deque_size = std::floor(N0 / thread_count);
-            int index = 0;
-            auto* deque_start_points = new int[thread_count];
-            for (int i = 0; i < thread_count; i++) {
-                deque_start_points[i] = deque_size * i;
-                for (int j = 0; j < deque_size; j++) {
-                    if (voxelView(index, 0) != safety && voxelView(index, 1) != safety && voxelView(index, 2) != safety) {
-                        temp_voxels[i].emplace_back(voxelView(index, 0), voxelView(index, 1), voxelView(index, 2), 1);
-                        voxelView(index, 0) = safety;
-                        voxelView(index, 1) = safety;
-                        voxelView(index, 2) = safety;
-                    }
-                    index++;
-                }
-            }
-
-
-            Kokkos::parallel_for(thread_count, voxelDeduplicate(voxelView, deque_start_points, temp_voxels));
-            Kokkos::fence();
-            double stop_dedup = timer.seconds();
-            std::cout << "Time of deduplication: " << stop_dedup - start_dedup << "\n";
-
-            /**
-             * voxels - final voxel std::deque
-             */
-
-            std::deque<Voxel> voxels;
-            auto *voxelStore = new VoxelStore();
-            for (int i = 0; i < N0; i++) {
-                if (voxelView(i, 0) != safety && voxelView(i, 1) != safety && voxelView(i, 2) != safety) {
-                    voxels.emplace_back(voxelView(i, 0), voxelView(i, 1), voxelView(i, 2), 1);
-                }
-            }
-            voxelStore->setVoxelsDeque(voxels);
-            voxelStore->convertToArray();
-            std::cout << "Total voxels in deque: " << voxels.size() << " || in View: " << N0 << "\n";
-            fileMaker::saveSchematic("hand_02", voxelStore);
-
-            double end_program = timer.seconds();
-            std::cout << "Total time: " << end_program - start_program << "\n";
-        }
-        Kokkos::finalize();
-    }
-
-
-    return 0;
-}
-
 void execution::runMultiCore(std::string& fileName, int thread_count, int scale, bool createLog, bool debug) {
     Kokkos::initialize(Kokkos::InitializationSettings().set_num_threads(thread_count));
     {
@@ -309,7 +123,7 @@ void execution::runMultiCore(std::string& fileName, int thread_count, int scale,
          */
 
         auto *objectStore = new ObjectStore();
-        fileMaker::loadObject(fileName + ".obj", objectStore, scale);
+        fileMaker::loadObject(fileName, objectStore, scale);
         auto faces = objectStore->getFaces();
         auto faces_size = objectStore->getSizeFaces();
         int start_point[faces_size];
@@ -427,7 +241,7 @@ void execution::runSingleCore(std::string& fileName,int scale,bool createLog,boo
 
     auto *objectStore = new ObjectStore();
     auto *voxelStore = new VoxelStore();
-    fileMaker::loadObject(fileName + ".obj", objectStore, scale);
+    fileMaker::loadObject(fileName, objectStore, scale);
     auto faces = objectStore->getFaces();
 
     /**

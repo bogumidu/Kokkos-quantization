@@ -51,7 +51,7 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
     std::string group = "null";
     std::string line;
     std::deque<Face> faces;
-    std::fstream file("../model_files/" + fileName);
+    std::fstream file(fileName);
     if (file.is_open()) {
         int current_line = 0;
         while (getline(file, line)) {
@@ -170,7 +170,7 @@ void fileMaker::loadFile::loadObject(const std::string &fileName, ObjectStore *o
         objectStore->setSizeNormals((int) normals.size());
         objectStore->calculateDimensions();
         file.close();
-    } else std::cout << "Unable to open file";
+    } else std::cout << "Unable to open file" << std::endl;
 }
 
 std::vector<Voxel> fileMaker::loadFile::loadSchematic(const std::string &fileName) {
