@@ -108,7 +108,7 @@ struct voxelDeduplicate {
 
 };
 
-void execution::runMultiCore(std::string& fileName, int thread_count, int scale, bool createLog, bool debug) {
+void execution::runMultiCore(std::string &fileName, int thread_count, int scale, bool createLog, bool debug) {
     Kokkos::initialize(Kokkos::InitializationSettings().set_num_threads(thread_count));
     {
         Kokkos::Timer timer;
@@ -137,9 +137,10 @@ void execution::runMultiCore(std::string& fileName, int thread_count, int scale,
             temp_vox += voxel_change;
         }
 
-        if (vox_total < 2000000) std::cerr
-            << "WARNING: Small voxel count may lead to inaccurate results. Calculated voxel count is: "
-            << vox_total << "\n";
+        if (vox_total < 2000000)
+            std::cerr
+                    << "WARNING: Small voxel count may lead to inaccurate results. Calculated voxel count is: "
+                    << vox_total << "\n";
 
         /**
          * View initialization
@@ -182,10 +183,10 @@ void execution::runMultiCore(std::string& fileName, int thread_count, int scale,
          */
 
         double start_dedup = timer.seconds();
-        auto* temp_voxels = new std::deque<Voxel>[thread_count];
+        auto *temp_voxels = new std::deque<Voxel>[thread_count];
         int deque_size = std::floor(N0 / thread_count);
         int index = 0;
-        auto* deque_start_points = new int[thread_count];
+        auto *deque_start_points = new int[thread_count];
         for (int i = 0; i < thread_count; i++) {
             deque_start_points[i] = deque_size * i;
             for (int j = 0; j < deque_size; j++) {
@@ -224,12 +225,14 @@ void execution::runMultiCore(std::string& fileName, int thread_count, int scale,
         double end_program = timer.seconds();
         if (debug) std::cout << "Total time: " << end_program - start_program << "\n";
 
-        if (createLog) fileMaker::generateLog(fileName, thread_count, scale, (int) voxels.size(), N0, (double) (end_program - start_program));
+        if (createLog)
+            fileMaker::generateLog(fileName, thread_count, scale, (int) voxels.size(), N0,
+                                   (double) (end_program - start_program));
     }
     Kokkos::finalize();
 }
 
-void execution::runSingleCore(std::string& fileName,int scale,bool createLog,bool debug) {
+void execution::runSingleCore(std::string &fileName, int scale, bool createLog, bool debug) {
     Kokkos::Timer timer;
     double start_program = timer.seconds();
 
@@ -272,6 +275,8 @@ void execution::runSingleCore(std::string& fileName,int scale,bool createLog,boo
     double end_program = timer.seconds();
     if (debug) std::cout << "Total time: " << end_program - start_program << "\n";
 
-    if (createLog) fileMaker::generateLog(fileName, 1, scale, (int) voxelStore->getSize(), 0, (double) (end_program - start_program));
+    if (createLog)
+        fileMaker::generateLog(fileName, 1, scale, (int) voxelStore->getSize(), voxelStore->getVoxelsDeque().size(),
+                               (double) (end_program - start_program));
 
 }
