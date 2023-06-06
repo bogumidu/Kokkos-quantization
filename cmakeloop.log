@@ -38,3 +38,19 @@ CMAKE_CXX_COMPILER= /usr/bin/c++
 --     Device Parallel: NoTypeDefined
 --     Host Parallel: NoTypeDefined
 --       Host Serial: SERIAL
+
+
+
+Running voxelization for model in file: ./model_files/skull.obj
+Set scale: 1
+Threads provided: 2
+Running on Kokkos device
+Kokkos::OpenMP::initialize WARNING: OMP_PROC_BIND environment variable not set
+  In general, for best performance with OpenMP 4.0 or better set OMP_PROC_BIND=spread and OMP_PLACES=threads
+  For best performance with OpenMP 3.1 set OMP_PROC_BIND=true
+  For unit testing set OMP_PROC_BIND=false
+
+WARNING: Small voxel count may lead to inaccurate results. Calculated voxel count is: 19452
+double free or corruption (out)
+/home/uzytkownik/Dokumenty/Masters code/algorithm.sh: line 14:  7850 Aborted                 (core dumped) $EXECUTABLE ./model_files/skull.obj -t:$j -s:$k --log
+

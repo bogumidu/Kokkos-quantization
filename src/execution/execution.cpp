@@ -137,10 +137,11 @@ void execution::runMultiCore(std::string &fileName, int thread_count, int scale,
             temp_vox += voxel_change;
         }
 
-        if (vox_total < 2000000)
-            std::cerr
-                    << "WARNING: Small voxel count may lead to inaccurate results. Calculated voxel count is: "
-                    << vox_total << "\n";
+        if (vox_total < 2000000) {
+            std::ostringstream stream;
+            stream << "WARNING: Small voxel count may lead to inaccurate results. Calculated voxel count is: " << vox_total;
+            printf("\e[0;33m%s\e[0m\n", stream.str().c_str());
+        }
 
         /**
          * View initialization

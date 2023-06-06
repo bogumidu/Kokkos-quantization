@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
             if (thread_count > std::thread::hardware_concurrency()) {
                 thread_count = (int) std::thread::hardware_concurrency();
                 std::cerr << "WARNING: Provided thread count is larger than hardware thread count using "
-                << thread_count << " instead" << "\n";
+                          << thread_count << " instead" << "\n";
             }
             continue;
         }
@@ -66,8 +66,8 @@ int main(int argc, char *argv[]) {
 
 
     std::cout << "Running voxelization for model in file: " << fileName << "\n"
-    << "Set scale: " << scale << "\n"
-    << "Threads provided: " << thread_count << "\n";
+              << "Set scale: " << scale << "\n"
+              << "Threads provided: " << thread_count << "\n";
 
     if (thread_count > 1) {
         std::cout << "Running on Kokkos device" << "\n";
