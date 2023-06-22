@@ -1,4 +1,4 @@
-# Temat pracy
+# Przenośna implementacja algorytmu kwantyzacji wierzchołków trójkątów z wykorzystaniem interfejsu Kokkos
 ## Bogumił Sokołowski-Duda
 ### Uruchamianie pliku *execute*
 
